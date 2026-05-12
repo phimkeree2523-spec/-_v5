@@ -1,0 +1,3551 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Payroll v5</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;font-size:13px;color:#1a1a2e;background:#f0f4f8}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+:root{
+  --bg:#f0f4f8;--card:#fff;--border:#e2e8f0;--border2:#cbd5e1;
+  --text:#1a1a2e;--text2:#64748b;--text3:#94a3b8;
+  --primary:#185FA5;--primary-dark:#0C447C;--primary-light:#E6F1FB;
+  --green:#0F6E56;--green-light:#EAF3DE;--green-border:#C0DD97;
+  --red:#A32D2D;--red-light:#FCEBEB;--red-border:#F09595;
+  --orange:#633806;--orange-light:#FAEEDA;
+  --rad:8px;--rad-lg:12px;
+}
+
+.wrap{padding:14px;max-width:100%;overflow:hidden}
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.app-title{font-size:16px;font-weight:700;color:var(--primary-dark);letter-spacing:-.3px;margin-right:4px}
+.app-ver{font-size:10px;background:var(--primary);color:#fff;padding:2px 6px;border-radius:20px;font-weight:600}
+
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--card);padding:8px 10px;border-radius:var(--rad-lg);border:0.5px solid var(--border);margin-bottom:10px}
+.btn{height:32px;padding:0 12px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--rad);background:var(--card);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-family:inherit;transition:all .15s}
+.btn:hover{background:#f8fafc;border-color:#94a3b8}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary:hover{background:var(--primary-dark)}
+.btn.success{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.success:hover{background:#0a5440}
+.btn.warning{background:#d97706;color:#fff;border-color:#d97706}
+.btn.warning:hover{background:#b45309}
+.btn.smd{height:26px;padding:0 8px;font-size:11px;color:var(--red);border:0.5px solid var(--red-border);background:transparent;border-radius:var(--rad);cursor:pointer;display:inline-flex;align-items:center;transition:all .15s;font-family:inherit}
+.btn.smd:hover{background:var(--red-light)}
+.btn.edit-btn{height:26px;padding:0 8px;font-size:11px;color:var(--primary);border:0.5px solid #93c5fd;background:transparent;border-radius:var(--rad);cursor:pointer;display:inline-flex;align-items:center;transition:all .15s;font-family:inherit}
+.btn.edit-btn:hover{background:var(--primary-light)}
+.sep{width:1px;height:22px;background:var(--border2);margin:0 2px}
+select,input[type=text],input[type=number]{height:32px;font-size:13px;padding:0 8px;border:0.5px solid var(--border2);border-radius:var(--rad);background:var(--card);color:var(--text);font-family:inherit}
+select:focus,input:focus{outline:2px solid var(--primary);outline-offset:-1px}
+
+.hint{font-size:11px;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 10px;background:var(--card);border-radius:var(--rad);border:0.5px solid var(--border)}
+.hbox{display:inline-flex;align-items:center;justify-content:center;width:26px;height:18px;border-radius:4px;font-size:11px;font-weight:600}
+
+/* Save status */
+.save-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-left:auto}
+.save-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block}
+.save-dot.saving{background:#f59e0b;animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border:0.5px solid var(--border);border-radius:var(--rad-lg);background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;min-width:900px}
+thead th{background:#f8fafc;padding:5px 3px;text-align:center;font-weight:600;font-size:11px;border-bottom:0.5px solid var(--border);border-right:0.5px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
+.sh0{position:sticky;left:0;z-index:3;background:#f8fafc;min-width:28px}
+.sh1{position:sticky;left:28px;z-index:3;background:#f8fafc;min-width:130px;text-align:left!important}
+.sh2{position:sticky;left:158px;z-index:3;background:#f8fafc;min-width:72px}
+.sh3{position:sticky;left:230px;z-index:3;background:#f8fafc;min-width:58px}
+tbody tr:not(.grow):not(.gtrow):hover td{background:#f4f8ff}
+tbody td{padding:2px 2px;text-align:center;border-bottom:0.5px solid var(--border);border-right:0.5px solid var(--border);font-size:11px}
+.sd0{position:sticky;left:0;background:inherit;z-index:1;min-width:28px}
+.sd1{position:sticky;left:28px;background:inherit;z-index:1;text-align:left;min-width:130px;padding-left:6px;font-size:12px}
+.sd2{position:sticky;left:158px;background:inherit;z-index:1;min-width:72px}
+.sd3{position:sticky;left:230px;background:inherit;z-index:1;min-width:58px}
+.grow td{background:#E6F1FB;color:var(--primary-dark);font-weight:600;padding:5px 8px;border-bottom:0.5px solid #B5D4F4;cursor:pointer;user-select:none}
+.gtrow td{background:var(--green-light);color:#27500A;font-weight:600;font-size:11px;padding:4px 6px;border-bottom:0.5px solid var(--green-border)}
+.dcell{width:28px;min-width:28px;padding:1px 0}
+.cy-mul{width:26px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;background:#f1f5f9;color:#94a3b8;user-select:none;transition:filter .1s;margin:auto}
+.cy-mul:hover{filter:brightness(.92)}
+.cy-mul.v1{background:#E1F5EE;color:#085041}
+.cy-mul.v2{background:var(--orange-light);color:var(--orange)}
+.cy-mul.v3{background:#FAECE7;color:#712B13}
+.cy-mul.v5{background:#FBEAF0;color:#72243E}
+.cy-mul.vx{background:#f3e8ff;color:#6b21a8}
+.cy-ot{width:26px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;background:transparent;color:#cbd5e1;user-select:none;transition:filter .1s;margin:auto}
+.cy-ot:hover{background:#e0eeff;color:#185FA5}
+.cy-ot.cy-ot-on{background:#dceeff;color:#185FA5}
+.ni{width:100%;border:none;background:transparent;text-align:center;font-size:11px;color:var(--text);padding:0;font-family:inherit}
+.ni:focus{outline:1px solid var(--primary);border-radius:2px}
+.col-s{background:#f0f6ff;font-weight:500}
+.col-p{background:#d1fae5;font-weight:700;color:#065f46;font-size:13px}
+.emp-name-cell{display:flex;align-items:center;gap:4px}
+
+/* Summary */
+.sum-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin:10px 0}
+.scard{background:var(--card);border-radius:var(--rad);padding:10px 14px;border:0.5px solid var(--border);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.scard .lbl{font-size:11px;color:var(--text2)}
+.scard .val{font-size:19px;font-weight:700;margin-top:2px}
+.gsumtbl{width:100%;border-collapse:collapse;font-size:12px;border:0.5px solid var(--border);border-radius:var(--rad-lg);overflow:hidden;margin-top:8px;background:var(--card)}
+.gsumtbl th{background:#f8fafc;padding:8px 10px;font-weight:600;border-bottom:0.5px solid var(--border);text-align:left}
+.gsumtbl td{padding:8px 10px;border-bottom:0.5px solid var(--border)}
+.gsumtbl tr:last-child td{border-bottom:none}
+.gsumtbl .foot td{background:var(--green-light);font-weight:700;color:#27500A;border-top:0.5px solid var(--green-border)}
+
+/* Modals */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:var(--rad-lg);padding:0;min-width:300px;max-width:420px;width:92%;border:0.5px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.18);display:flex;flex-direction:column;max-height:92vh}
+.modal h3{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--primary-dark)}
+.modal-head{padding:18px 22px 0;flex-shrink:0}
+.modal-body{padding:0 22px;overflow-y:auto;flex:1}
+.modal-foot{padding:12px 22px 18px;flex-shrink:0;border-top:0.5px solid var(--border);background:var(--card);border-radius:0 0 var(--rad-lg) var(--rad-lg)}
+.modal-foot .mact{margin-top:0}
+.fr{margin-bottom:12px}
+.fr label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;font-weight:500}
+.fr input,.fr select{width:100%;height:34px}
+.mact{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.gitem{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.section-title{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text);display:flex;align-items:center;gap:6px}
+
+/* Import area */
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--rad);padding:24px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text2)}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--primary);background:var(--primary-light);color:var(--primary)}
+.drop-zone i{font-size:28px;margin-bottom:6px;display:block}
+.import-preview{max-height:280px;overflow-y:auto;margin-top:10px;font-size:11px;border:0.5px solid var(--border);border-radius:var(--rad)}
+.import-preview table{min-width:0;font-size:11px}
+.import-preview thead th{background:#f8fafc;padding:4px 8px;font-size:11px}
+.import-preview tbody td{padding:4px 8px}
+
+/* PDF Slip styles (hidden, printed) */
+@media print{
+  html,body{margin:0;padding:0;background:#fff}
+  body *{visibility:hidden}
+  #slip-print-area,#slip-print-area *{visibility:visible}
+  #slip-print-area{position:absolute;top:0;left:0;width:100%;background:#fff;padding:24px;font-family:'Sarabun',sans-serif}
+  #print-report-area,#print-report-area *{visibility:visible}
+  #print-report-area{position:static;display:block;width:100%;background:#fff;padding:0;overflow:visible;z-index:9999}
+  #print-report-area .pr-page{display:block;page-break-after:always;break-after:page;overflow:visible}
+  #print-report-area .pr-page:last-child{page-break-after:auto;break-after:auto}
+}
+
+/* ── Professional Print Report Styles ── */
+#print-report-area {
+  font-family: 'Sarabun', sans-serif;
+}
+#print-report-area .pr-page {
+  padding: 18mm 14mm 14mm;
+  background: #fff;
+}
+/* Header banner */
+#print-report-area .pr-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 3px solid #185FA5;
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+}
+#print-report-area .pr-logo-area h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0C447C;
+  letter-spacing: -0.4px;
+  margin: 0 0 2px;
+}
+#print-report-area .pr-logo-area .pr-period {
+  font-size: 13px;
+  color: #185FA5;
+  font-weight: 600;
+}
+#print-report-area .pr-meta {
+  text-align: right;
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.6;
+}
+#print-report-area .pr-meta b {
+  color: #1a1a2e;
+  font-size: 11px;
+}
+/* Group title badge */
+#print-report-area .grp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #185FA5 0%, #0C447C 100%);
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 6px;
+  margin: 14px 0 10px;
+  letter-spacing: 0.2px;
+}
+#print-report-area .grp-header::before {
+  content: '▌';
+  font-size: 16px;
+  opacity: 0.7;
+}
+/* Main table */
+#print-report-area table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9.5px;
+}
+#print-report-area thead th {
+  background: #1e3a5f;
+  color: #fff;
+  font-weight: 700;
+  padding: 5px 4px;
+  text-align: center;
+  border: 0.5px solid #2d5080;
+  white-space: nowrap;
+  font-size: 9px;
+}
+#print-report-area thead th:nth-child(1) { border-radius: 4px 0 0 0; }
+#print-report-area tbody td {
+  border: 0.5px solid #cbd5e1;
+  padding: 4px 4px;
+  font-size: 9.5px;
+}
+/* Alternating rows */
+#print-report-area tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+#print-report-area tbody tr:nth-child(odd) td {
+  background: #ffffff;
+}
+/* Weekend cols */
+#print-report-area .wknd {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+}
+/* Work day cells */
+#print-report-area .has-work {
+  background: #d1fae5 !important;
+  font-weight: 700;
+  color: #065f46 !important;
+}
+/* OT cell */
+#print-report-area .has-ot {
+  color: #1e40af;
+  font-size: 8px;
+}
+/* Employee name */
+#print-report-area .emp-name {
+  text-align: left;
+  padding-left: 7px !important;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #1a1a2e;
+}
+/* Summary row per group */
+#print-report-area .summary-row td {
+  background: #e0f2fe !important;
+  font-weight: 700;
+  font-size: 10px;
+  color: #0C447C;
+  border-top: 1.5px solid #93c5fd;
+}
+/* Grand total row */
+#print-report-area .grand-row td {
+  background: #dcfce7 !important;
+  font-weight: 800;
+  font-size: 11px;
+  color: #14532d;
+  border-top: 2px solid #86efac;
+}
+/* Stat columns */
+#print-report-area td[style*="color:#065f46"] { color: #065f46 !important; font-weight: 700; }
+#print-report-area td[style*="color:#1e40af"] { color: #1e40af !important; }
+#print-report-area td[style*="color:#14532d"] { color: #14532d !important; font-weight: 800; }
+/* Summary compact table */
+#print-report-area .sum-section {
+  margin-top: 18px;
+  padding-top: 10px;
+  border-top: 2px dashed #cbd5e1;
+}
+#print-report-area .sum-section h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0C447C;
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+}
+/* Footer watermark */
+#print-report-area .pr-footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  font-size: 9px;
+  color: #94a3b8;
+}
+#print-report-area .pr-footer .sign-box {
+  text-align: center;
+  width: 160px;
+}
+#print-report-area .pr-footer .sign-line {
+  border-bottom: 1px solid #94a3b8;
+  margin-bottom: 4px;
+  height: 28px;
+}
+/* Slip print area refinements */
+#slip-print-area {
+  font-family: 'Sarabun', sans-serif;
+}
+
+@media print {
+  #print-report-area .pr-page { padding: 0; }
+}
+.slip-modal .modal{max-width:520px}
+.slip-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.slip-table th,.slip-table td{padding:5px 10px;border:0.5px solid #ddd;text-align:left}
+.slip-table th{background:#f8fafc;font-weight:600;width:50%}
+.slip-footer{margin-top:14px;padding:10px;background:var(--green-light);border-radius:var(--rad);display:flex;justify-content:space-between;align-items:center}
+.slip-footer .total-lbl{font-size:13px;color:var(--green)}
+.slip-footer .total-val{font-size:20px;font-weight:700;color:#27500A}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-bar">
+    <span class="app-title">💼 ระบบเงินเดือน</span>
+    <span class="app-ver">v5</span>
+    <div class="save-status" id="saveStatus">
+      <span class="save-dot" id="saveDot"></span>
+      <span id="saveText">โหลดข้อมูลแล้ว</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn primary" onclick="openAdd()"><i class="ti ti-user-plus"></i> เพิ่มพนักงาน</button>
+    <button class="btn" onclick="openGrp()"><i class="ti ti-folders"></i> จัดการกลุ่ม</button>
+    <button class="btn" onclick="openSiteMgr()" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-map-pin"></i> จัดการสถานที่</button>
+    <div class="sep"></div>
+    <button class="btn success" onclick="openImport()"><i class="ti ti-file-import"></i> Import</button>
+    <button class="btn warning" onclick="exportCSV()"><i class="ti ti-file-spreadsheet"></i> Export CSV</button>
+    <button class="btn" onclick="exportExcel()"><i class="ti ti-brand-office"></i> Export Excel</button>
+    <div class="sep"></div>
+    <button class="btn smd" onclick="clearAllEmployees()" title="เคลียข้อมูลวันทำงานทั้งหมด (ไม่ลบรายชื่อพนักงาน)"><i class="ti ti-calendar-off"></i> เคลียวันทำงาน</button>
+    <button class="btn smd" onclick="openBulkDelete()" title="ลบพนักงานหลายคน/กลุ่ม/ทั้งหมด" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-users-minus" style="font-size:13px"></i> ลบพนักงาน</button>
+    <button class="btn" onclick="openPrintReport()" title="พิมพ์รายงานการทำงาน" style="color:#0369a1;border-color:#7dd3fc"><i class="ti ti-printer" style="font-size:13px"></i> พิมพ์รายงาน</button>
+    <button class="btn" onclick="openPrintSite()" title="พิมพ์รายงานแยกตามสถานที่" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-map-pin" style="font-size:13px"></i> พิมพ์ตามสถานที่</button>
+    <button class="btn" onclick="openExportImg()" title="ส่งออกรายงานเป็นรูปภาพ PNG รายกลุ่ม" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-photo-down" style="font-size:13px"></i> Export รูปภาพ</button>
+    <div class="sep"></div>
+    <select id="filterG" onchange="render()" style="min-width:110px"></select>
+    <select id="filterSite" onchange="render()" style="min-width:120px" title="กรองตามสถานที่ทำงาน"></select>
+    <select id="selMonth" onchange="changeMonth()" style="min-width:130px"></select>
+  </div>
+
+  <div class="hint">
+    <span>คลิกช่องบน (วัน):</span>
+    <span class="hbox" style="background:#f1f5f9;color:#94a3b8">·</span><span>→</span>
+    <span class="hbox" style="background:#E1F5EE;color:#085041">1</span>
+    <span class="hbox" style="background:#FAEEDA;color:#633806">2</span>
+    <span class="hbox" style="background:#FAECE7;color:#712B13">3</span>
+    <span style="font-size:11px;color:var(--text2)">…10</span>
+    <span style="color:#e2e8f0">|</span>
+    <span>คลิกช่องล่าง (OT): 1–10 ชม./ครั้ง</span>
+    <span style="color:#e2e8f0">|</span>
+    <span>คลิกขวา: ล้างค่า</span>
+    <span style="margin-left:auto;font-size:11px;color:#22c55e;display:flex;align-items:center;gap:4px"><i class="ti ti-device-floppy" style="font-size:13px"></i>บันทึกอัตโนมัติ</span>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead id="tHead"></thead>
+      <tbody id="tBody"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:14px">
+    <div class="section-title"><i class="ti ti-chart-bar"></i> สรุปรายกลุ่ม</div>
+    <div id="groupSumWrap"></div>
+    <div class="sum-grid" id="totalCards"></div>
+  </div>
+  <div style="margin-top:10px" id="siteSumSection" style="display:none">
+    <div class="section-title"><i class="ti ti-map-pin" style="color:#7c3aed"></i> สรุปตามสถานที่ทำงาน</div>
+    <div id="siteSumWrap"></div>
+  </div>
+</div>
+
+<!-- Add/Edit Employee Modal -->
+<div class="modal-bg" id="addModal">
+<div class="modal">
+  <div class="modal-head"><h3 id="addModalTitle">เพิ่มพนักงาน</h3></div>
+  <div class="modal-body">
+    <input type="hidden" id="editEmpId"/>
+    <div class="fr"><label>ชื่อ-นามสกุล</label><input id="iName" placeholder="ชื่อพนักงาน"/></div>
+    <div class="fr"><label>กลุ่ม/แผนก</label><select id="iGrp"></select></div>
+    <div class="fr"><label>ค่าแรง/วัน (฿) — ฐานตัวคูณ ×1</label><input id="iWage" type="number" value="400" oninput="document.getElementById('otRatePreview').textContent=(parseFloat(this.value)||0).toFixed(2)"/></div>
+    <div class="fr" style="background:var(--primary-light);border-radius:var(--rad);padding:8px 10px;font-size:12px;color:var(--primary-dark)">
+      อัตรา OT/ชม. = ค่าแรง ÷ 8 × 1.5 = <b id="otRatePreview">75.00</b> ฿
+    </div>
+    <input type="hidden" id="iOtRate"/>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('addModal')">ยกเลิก</button>
+      <button class="btn primary" onclick="saveEmp()">บันทึก</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Group Modal -->
+<div class="modal-bg" id="grpModal">
+<div class="modal">
+  <div class="modal-head"><h3>จัดการกลุ่ม/แผนก</h3></div>
+  <div class="modal-body">
+    <div class="fr" style="display:flex;gap:6px">
+      <input id="iGrpName" placeholder="ชื่อกลุ่มใหม่" style="flex:1"/>
+      <button class="btn primary" onclick="saveGrp()">เพิ่ม</button>
+    </div>
+    <div id="gList" style="margin-top:8px;max-height:200px;overflow-y:auto"></div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact"><button class="btn primary" onclick="closeM('grpModal')">ปิด</button></div>
+  </div>
+</div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-bg" id="importModal">
+<div class="modal" style="max-width:800px">
+  <div class="modal-head">
+    <h3><i class="ti ti-file-import"></i> Import ข้อมูลพนักงาน</h3>
+  </div>
+  <div class="modal-body">
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:0;margin-bottom:12px;border:0.5px solid var(--border2);border-radius:var(--rad);overflow:hidden">
+      <button id="tabFile" onclick="switchImportTab('file')" style="flex:1;height:32px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--primary);color:#fff;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s">
+        <i class="ti ti-upload"></i> อัปโหลดไฟล์
+      </button>
+      <button id="tabGsheet" onclick="switchImportTab('gsheet')" style="flex:1;height:32px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--card);color:var(--text2);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s">
+        <i class="ti ti-brand-google"></i> Google Sheet
+      </button>
+    </div>
+
+    <!-- Tab: อัปโหลดไฟล์ -->
+    <div id="panelFile">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">
+        รองรับไฟล์ <b>.xlsx, .xls, .csv</b> — ระบบตรวจจับรูปแบบอัตโนมัติ:<br>
+        <span style="background:#E6F1FB;color:#0C447C;padding:1px 6px;border-radius:10px;font-size:11px;margin-top:3px;display:inline-block">👤 รายชื่อพนักงาน</span>
+        คอลัมน์: <b>ชื่อ / กลุ่ม / ค่าแรง</b> (สร้างกลุ่มอัตโนมัติ)<br>
+        <span style="background:#EAF3DE;color:#27500A;padding:1px 6px;border-radius:10px;font-size:11px;margin-top:3px;display:inline-block">📅 การเข้างาน</span>
+        คอลัมน์: <b>วันที่ / ชื่อพนักงาน / โอที(ชม.)</b><br>
+        <a href="#" onclick="downloadTemplate();return false" style="color:var(--primary);font-size:11px">📥 ดาวน์โหลด Template</a>
+      </div>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('importFile').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="handleDrop(event)">
+        <i class="ti ti-cloud-upload"></i>
+        คลิกหรือลากไฟล์มาวางที่นี่
+      </div>
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)"/>
+    </div>
+
+    <!-- Tab: Google Sheet -->
+    <div id="panelGsheet" style="display:none">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;padding:8px 10px;background:#f0f7ff;border:0.5px solid #bfdbfe;border-radius:var(--rad)">
+        ⚡ วาง URL ของ <b>Google Apps Script</b> ที่ deploy แล้ว<br>
+        <span style="font-size:11px;color:var(--text3)">รองรับทั้งรูปแบบ <b>รายชื่อพนักงาน</b> (ชื่อ / กลุ่ม / ค่าแรง) และ <b>การเข้างาน</b> (วันที่ / ชื่อ / OT)</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <input id="scriptUrl" type="text" placeholder="https://script.google.com/macros/s/.../exec"
+          style="flex:1;font-size:11px;height:34px;border:0.5px solid var(--border2);border-radius:var(--rad);padding:0 10px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')fetchGsheet()"/>
+        <button class="btn primary" onclick="fetchGsheet()" id="fetchGsheetBtn" style="height:34px;white-space:nowrap">
+          <i class="ti ti-refresh"></i> ดึงข้อมูล
+        </button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <label style="font-size:12px;color:var(--text2);font-weight:500;white-space:nowrap">📋 ชื่อ Sheet:</label>
+        <input id="scriptSheetName" type="text" list="sheetNameList"
+          placeholder="พิมพ์หรือเลือก Sheet (เว้นว่าง = Sheet แรก)"
+          style="flex:1;font-size:12px;height:30px;border:0.5px solid var(--border2);border-radius:var(--rad);padding:0 8px;font-family:inherit"
+          onkeydown="if(event.key==='Enter')fetchGsheet()"/>
+        <datalist id="sheetNameList"></datalist>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:6px 8px;background:#f8fafc;border-radius:var(--rad);border:0.5px solid var(--border)">
+        <label style="font-size:11px;color:var(--text2);font-weight:600">📂 รูปแบบข้อมูล:</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+          <input type="radio" name="gsheetMode" id="gmodeAuto" value="auto" checked style="accent-color:var(--primary);cursor:pointer"/>
+          <span>ตรวจจับอัตโนมัติ</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+          <input type="radio" name="gsheetMode" id="gmodeEmp" value="emp" style="accent-color:var(--primary);cursor:pointer"/>
+          <span>รายชื่อพนักงาน</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer">
+          <input type="radio" name="gsheetMode" id="gmodeAtt" value="att" style="accent-color:var(--primary);cursor:pointer"/>
+          <span>การเข้างาน</span>
+        </label>
+      </div>
+      <div id="gsheetStatus" style="display:none;padding:8px 10px;border-radius:var(--rad);font-size:12px;margin-bottom:8px"></div>
+    </div>
+
+    <div id="importPreview"></div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('importModal')">ยกเลิก</button>
+      <button class="btn primary" id="importConfirmBtn" style="display:none" onclick="confirmImport()">
+        <i class="ti ti-check"></i> นำเข้าข้อมูล
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Slip Modal -->
+<div class="modal-bg slip-modal" id="slipModal">
+<div class="modal" style="max-width:520px">
+  <div class="modal-head"><h3><i class="ti ti-receipt"></i> สลิปเงินเดือน</h3></div>
+  <div class="modal-body"><div id="slipContent"></div></div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('slipModal')">ปิด</button>
+      <button class="btn primary" onclick="printSlip()"><i class="ti ti-printer"></i> พิมพ์</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div id="slip-print-area" style="display:none"></div>
+<!-- Bulk Delete Modal -->
+<div class="modal-bg" id="bulkDelModal">
+<div class="modal" style="max-width:480px">
+  <div class="modal-head"><h3><i class="ti ti-users-minus" style="color:#7c3aed"></i> ลบพนักงาน</h3></div>
+  <div class="modal-body" style="padding-top:4px">
+  <div style="display:flex;gap:4px;margin-bottom:12px;background:#f8fafc;padding:4px;border-radius:8px;border:0.5px solid var(--border)">
+    <button id="bdTab1" onclick="bdSetTab(1)" style="flex:1;height:30px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:var(--primary);color:#fff;transition:all .15s">☑ เลือกรายชื่อ</button>
+    <button id="bdTab2" onclick="bdSetTab(2)" style="flex:1;height:30px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-weight:500;background:transparent;color:var(--text2);transition:all .15s">🗂 ลบตามกลุ่ม</button>
+    <button id="bdTab3" onclick="bdSetTab(3)" style="flex:1;height:30px;font-size:12px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-weight:500;background:transparent;color:var(--text2);transition:all .15s">🗑 ลบทั้งหมด</button>
+  </div>
+  <div id="bdPanel1" style="flex:1;overflow-y:auto">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+      <input id="bdSearch" type="text" placeholder="🔍 ค้นหาชื่อ..." oninput="bdFilterList()" style="flex:1;height:30px;font-size:12px"/>
+      <button onclick="bdSelectAll(true)" style="height:30px;padding:0 8px;font-size:11px;border:0.5px solid var(--border2);border-radius:6px;background:var(--card);cursor:pointer;font-family:inherit">เลือกทั้งหมด</button>
+      <button onclick="bdSelectAll(false)" style="height:30px;padding:0 8px;font-size:11px;border:0.5px solid var(--border2);border-radius:6px;background:var(--card);cursor:pointer;font-family:inherit">ล้าง</button>
+    </div>
+    <div id="bdEmpList" style="border:0.5px solid var(--border);border-radius:8px;max-height:280px;overflow-y:auto"></div>
+    <div id="bdSelCount" style="margin-top:6px;font-size:11px;color:var(--text2)">เลือก 0 คน</div>
+  </div>
+  <div id="bdPanel2" style="display:none">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">เลือกกลุ่มที่ต้องการลบพนักงานทั้งหมดในกลุ่มนั้น</p>
+    <div id="bdGrpList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+  </div>
+  <div id="bdPanel3" style="display:none">
+    <div style="text-align:center;padding:24px 16px">
+      <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+      <div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:8px">ลบพนักงานทั้งหมด</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">จะลบพนักงาน <b id="bdAllCount">0</b> คน และข้อมูลการเข้างานทั้งหมด</div>
+      <div style="font-size:11px;color:var(--red);background:var(--red-light);border-radius:6px;padding:8px;border:0.5px solid var(--red-border)">การกระทำนี้ไม่สามารถย้อนกลับได้</div>
+    </div>
+  </div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('bulkDelModal')">ยกเลิก</button>
+      <button class="btn" id="bdConfirmBtn" onclick="bdConfirm()" style="background:var(--red);color:#fff;border-color:var(--red)"><i class="ti ti-trash"></i> <span id="bdConfirmLabel">ลบที่เลือก</span></button>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<script>
+const THAI_M=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DOW=['อา','จ','อ','พ','พฤ','ศ','ส'];
+const LS_KEY='payroll_v5_data';
+
+let groups=[{id:'g1',name:'ฝ่ายผลิต'},{id:'g2',name:'ฝ่ายขาย'}];
+let sites=[]; // [{id:'s1', name:'ร้านเสริมสวย'}]
+let employees=[
+  {id:'e1',name:'สมชาย ใจดี',group:'g1',wage:400,otRate:62.5},
+  {id:'e2',name:'สมหญิง รักงาน',group:'g1',wage:350,otRate:50},
+  {id:'e3',name:'วิชัย มุ่งมั่น',group:'g2',wage:450,otRate:75},
+  {id:'e4',name:'นภา สดใส',group:'g2',wage:300,otRate:50},
+];
+let att={};
+let collapsed=new Set();
+const now=new Date();
+let cY=now.getFullYear(),cM=now.getMonth();
+let pendingSave=null;
+let importRows=[];
+// finances[eid_yyyy_mm] = { advances:[{id,label,amount}], deductions:[{id,label,amount}], ssRate, ssFixed, debtToCompany, reimbursements:[{id,label,amount}], companyOwes, carRate }
+let finances={};
+
+function finKey(eid){return `${eid}_${cY}_${cM}`;}
+function getFin(eid){
+  const k=finKey(eid);
+  if(!finances[k])finances[k]={advances:[],deductions:[],ssRate:0,ssFixed:0,debtToCompany:0,reimbursements:[],companyOwes:0,carRate:0};
+  return finances[k];
+}
+function calcFinancials(emp){
+  const f=getFin(emp.id);
+  const{workDays,dayPay,otH,otPay,pay}=calcEmp(emp);
+  const totalAdv=f.advances.reduce((s,x)=>s+Number(x.amount||0),0);
+  const totalDed=f.deductions.reduce((s,x)=>s+Number(x.amount||0),0);
+  const ssAmount=f.ssFixed>0?Number(f.ssFixed):Math.round(pay*(Number(f.ssRate)||0)/100);
+  const totalDebt=Number(f.debtToCompany||0);
+  const totalReim=f.reimbursements.reduce((s,x)=>s+Number(x.amount||0),0);
+  const compOwes=Number(f.companyOwes||0);
+  const carAmt=Math.round(Number(f.carRate||0)*workDays);
+  const totalDeduct=totalAdv+totalDed+ssAmount+totalDebt;
+  const totalAdd=totalReim+compOwes+carAmt;
+  const netPay=pay-totalDeduct+totalAdd;
+  return{totalAdv,totalDed,ssAmount,totalDebt,totalReim,compOwes,carAmt,totalDeduct,totalAdd,netPay,pay,workDays,dayPay,otH,otPay};
+}
+
+// ─── Persistent Storage (window.storage) ────────────────────
+async function loadData(){
+  try{
+    const result=await window.storage.get(LS_KEY);
+    if(!result)return false;
+    const d=JSON.parse(result.value);
+    if(d.groups)groups=d.groups;
+    if(d.employees)employees=d.employees;
+    if(d.att)att=d.att;
+    if(d.collapsed)collapsed=new Set(d.collapsed);
+    if(d.sites)sites=d.sites;
+    if(d.finances)finances=d.finances;
+    return true;
+  }catch(e){return false;}
+}
+function saveData(){
+  setSaveStatus('saving');
+  clearTimeout(pendingSave);
+  pendingSave=setTimeout(async()=>{
+    try{
+      const payload=JSON.stringify({groups,employees,att,collapsed:[...collapsed],sites,finances});
+      await window.storage.set(LS_KEY,payload);
+      setSaveStatus('saved');
+    }catch(e){setSaveStatus('error');}
+  },600);
+}
+function setSaveStatus(s){
+  const dot=document.getElementById('saveDot');
+  const txt=document.getElementById('saveText');
+  if(s==='saving'){dot.className='save-dot saving';txt.textContent='กำลังบันทึก...';}
+  else if(s==='saved'){dot.className='save-dot';dot.style.background='#22c55e';txt.textContent='บันทึกแล้ว';}
+  else{dot.className='save-dot';dot.style.background='#ef4444';txt.textContent='บันทึกไม่สำเร็จ';}
+}
+
+// ─── Core Helpers ───────────────────────────────────────────
+function dim(y,m){return new Date(y,m+1,0).getDate()}
+function isWknd(y,m,d){const w=new Date(y,m,d).getDay();return w===0||w===6}
+function aKey(eid,d){return`${eid}_${cY}_${cM}_${d}`}
+
+function initAtt(){
+  const days=dim(cY,cM);
+  employees.forEach(e=>{
+    for(let d=1;d<=days;d++){
+      const k=aKey(e.id,d);
+      if(!(k in att)){att[k]={mul:isWknd(cY,cM,d)?'':1,ot:''};}
+    }
+  });
+}
+
+function mulClass(v){
+  if(v===''||v===null||v===undefined||Number(v)===0)return'';
+  const n=Number(v);
+  if(n===1)return'v1';
+  if(n===2)return'v2';
+  if(n===3)return'v3';
+  if(n<=5)return'v5';
+  return'vx';
+}
+
+function calcEmp(emp){
+  const days=dim(cY,cM);
+  let dayPay=0,otH=0,workDays=0;
+  for(let d=1;d<=days;d++){
+    const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+    const mul=r.mul===''?0:Number(r.mul)||0;
+    if(mul>0){workDays++;dayPay+=emp.wage*mul;}
+    otH+=Number(r.ot)||0;
+  }
+  const otRate=emp.wage/8*1.5;
+  const otPay=Math.round(otH*otRate);
+  return{workDays,dayPay:Math.round(dayPay),otH,otPay,otRate,pay:Math.round(dayPay+otPay)};
+}
+
+// ─── Setters ────────────────────────────────────────────────
+function setMul(eid,d,v){
+  const k=aKey(eid,d);if(!att[k])att[k]={mul:'',ot:''};
+  att[k].mul=v===''?'':v;render();saveData();
+}
+function setOt(eid,d,v){
+  const k=aKey(eid,d);if(!att[k])att[k]={mul:'',ot:''};
+  att[k].ot=v;render();saveData();
+}
+function updWage(eid,v){const e=employees.find(x=>x.id===eid);if(e){e.wage=Number(v)||0;render();saveData();}}
+function updOtRate(eid,v){const e=employees.find(x=>x.id===eid);if(e){e.otRate=Number(v)||0;render();saveData();}}
+function delEmp(eid){
+  const emp=employees.find(x=>x.id===eid);
+  if(!emp)return;
+  if(!confirm(`ลบพนักงาน "${emp.name}"?\n\nจะลบข้อมูลวันทำงานและ OT ทั้งหมดของพนักงานคนนี้ด้วย\nการกระทำนี้ไม่สามารถย้อนกลับได้`))return;
+  // ลบพนักงาน
+  employees=employees.filter(x=>x.id!==eid);
+  // ลบข้อมูลการเข้างานทั้งหมดของพนักงานคนนี้
+  Object.keys(att).forEach(k=>{if(k.startsWith(eid+'_'))delete att[k];});
+  render();saveData();
+}
+function toggleG(gid){if(collapsed.has(gid))collapsed.delete(gid);else collapsed.add(gid);render();saveData();}
+
+// ─── Cycle Click Functions ───────────────────────────────────
+const MUL_CYCLE=[1,2,3,4,5,6,7,8,9,10,''];
+function cycleMul(eid,d,el){
+  const k=aKey(eid,d);if(!att[k])att[k]={mul:'',ot:''};
+  const cur=att[k].mul;
+  const curN=cur===''||cur===0?'':Number(cur);
+  const idx=MUL_CYCLE.indexOf(curN===''?'':curN);
+  const next=MUL_CYCLE[(idx+1)%MUL_CYCLE.length];
+  att[k].mul=next===''?'':next;
+  el.textContent=next===''?'·':next;
+  el.className='cy-mul '+mulClass(next);
+  updateRowCalc(eid);saveData();
+}
+function clearMul(eid,d,el){
+  const k=aKey(eid,d);if(!att[k])att[k]={mul:'',ot:''};
+  att[k].mul='';el.textContent='·';el.className='cy-mul';
+  updateRowCalc(eid);saveData();
+}
+function cycleOt(eid,d,el){
+  const k=aKey(eid,d);if(!att[k])att[k]={mul:'',ot:''};
+  const cur=Number(att[k].ot)||0;
+  const next=cur>=10?0:cur+1;
+  att[k].ot=next===0?'':next;
+  el.textContent=next===0?'·':next;
+  el.className=next===0?'cy-ot':'cy-ot cy-ot-on';
+  updateRowCalc(eid);saveData();
+}
+function clearOt(eid,d,el){
+  const k=aKey(eid,d);if(!att[k])att[k]={mul:'',ot:''};
+  att[k].ot='';el.textContent='·';el.className='cy-ot';
+  updateRowCalc(eid);saveData();
+}
+// Update only summary cells of a row without full re-render
+function updateRowCalc(eid){
+  const emp=employees.find(e=>e.id===eid);if(!emp)return;
+  const{workDays,dayPay,otH,otPay,pay}=calcEmp(emp);
+  const row=document.querySelector(`[data-eid="${eid}"]`);if(!row)return;
+  row.querySelector('.rc-wd').textContent=workDays;
+  row.querySelector('.rc-ot').textContent=otH||'—';
+  row.querySelector('.rc-dp').textContent=dayPay.toLocaleString();
+  row.querySelector('.rc-op').textContent=otPay?otPay.toLocaleString():'—';
+  row.querySelector('.rc-pay').textContent=pay.toLocaleString();
+  render();
+}
+function buildMonSel(){
+  const s=document.getElementById('selMonth');s.innerHTML='';
+  for(let y=cY-1;y<=cY+1;y++){
+    for(let m=0;m<12;m++){
+      const o=document.createElement('option');
+      o.value=`${y}-${m}`;o.textContent=`${THAI_M[m]} ${y+543}`;
+      if(y===cY&&m===cM)o.selected=true;
+      s.appendChild(o);
+    }
+  }
+}
+function changeMonth(){
+  const[y,m]=document.getElementById('selMonth').value.split('-').map(Number);
+  cY=y;cM=m;initAtt();render();
+}
+
+function syncSels(){
+  ['iGrp','filterG'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;el.innerHTML='';
+    if(id==='filterG'){
+      const o=document.createElement('option');o.value='';o.textContent='ทุกกลุ่ม';el.appendChild(o);
+      // แสดงเฉพาะกลุ่มที่มีพนักงานอยู่ และเรียงตามตัวอักษร
+      const activeGids=new Set(employees.map(e=>e.group));
+      [...groups].filter(g=>activeGids.has(g.id))
+        .sort((a,b)=>a.name.localeCompare(b.name,'th'))
+        .forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=g.name.trim();el.appendChild(o);});
+    }else{
+      groups.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=g.name.trim();el.appendChild(o);});
+    }
+    el.value=cur;
+  });
+  // sync filterSite
+  const fs=document.getElementById('filterSite');
+  if(fs){
+    const curSite=fs.value;
+    fs.innerHTML='<option value="">📍 ทุกสถานที่</option>';
+    sites.forEach(s=>{
+      const o=document.createElement('option');o.value=s.id;o.textContent='📍 '+s.name;fs.appendChild(o);
+    });
+    fs.value=curSite;
+  }
+}
+
+// ─── Render ──────────────────────────────────────────────────
+function render(){
+  const fg=document.getElementById('filterG').value;
+  const fsite=document.getElementById('filterSite')?.value||'';
+  const days=dim(cY,cM);
+
+  let h=`<tr>
+    <th class="sh0" rowspan="2">ที่</th>
+    <th class="sh1" rowspan="2" style="text-align:left;padding-left:6px">ชื่อพนักงาน</th>
+    <th class="sh2" rowspan="2">฿/วัน</th>
+    <th class="sh3" rowspan="2" style="font-size:10px">OT ฿/ชม.<br><span style="font-weight:400;color:#185FA5">(÷8×1.5)</span></th>`;
+  for(let d=1;d<=days;d++){
+    const wk=isWknd(cY,cM,d);
+    const bg=wk?'background:#dceeff;color:#0C447C;':'';
+    h+=`<th style="${bg}font-size:11px;min-width:28px">${d}<br><span style="font-size:9px;opacity:.7">${DOW[new Date(cY,cM,d).getDay()]}</span></th>`;
+  }
+  h+=`<th class="col-s" rowspan="2" style="min-width:44px">วันทำงาน</th>
+      <th class="col-s" rowspan="2" style="min-width:44px">OT<br>ชม.</th>
+      <th class="col-s" rowspan="2" style="min-width:58px">ค่าแรงวัน</th>
+      <th class="col-s" rowspan="2" style="min-width:52px">ค่า OT</th>
+      <th class="col-p" rowspan="2" style="min-width:78px;font-size:12px;background:#a7f3d0;color:#064e3b;border-left:2px solid #34d399">💰 รวมค่าแรง</th>
+      <th rowspan="2" style="min-width:64px"></th></tr><tr>`;
+  for(let d=1;d<=days;d++){
+    const wk=isWknd(cY,cM,d);
+    const bg=wk?'background:#dceeff;':'';
+    h+=`<th style="${bg}font-size:9px;color:#185FA5;font-weight:500">OT</th>`;
+  }
+  h+=`</tr>`;
+  document.getElementById('tHead').innerHTML=h;
+
+  const filtered=fg?employees.filter(e=>e.group===fg):employees;
+  // ถ้ากรองตามสถานที่ — แสดงเฉพาะพนักงานที่มีวันทำงานในสถานที่นั้น
+  const filteredBySite=fsite?filtered.filter(e=>{
+    const days2=dim(cY,cM);
+    for(let d=1;d<=days2;d++){const r=att[aKey(e.id,d)];if(r&&r.site===fsite&&(Number(r.mul)||0)>0)return true;}
+    return false;
+  }):filtered;
+  const usedG=[...new Set(filteredBySite.map(e=>e.group))];
+  let body='',rowN=0,gPay=0,gWork=0,gOtH=0,gDP=0,gOP=0;
+  const gStats=[];
+
+  usedG.forEach(gid=>{
+    const g=groups.find(x=>x.id===gid)||{id:gid,name:'ไม่มีกลุ่ม'};
+    const gEmps=filteredBySite.filter(e=>e.group===gid);
+    const col=collapsed.has(gid);
+    const icon=col?'ti-chevron-right':'ti-chevron-down';
+    const colSpan=4+days+6;
+    body+=`<tr class="grow"><td colspan="${colSpan}" style="display:flex;align-items:center;gap:0">
+      <span onclick="toggleG('${gid}')" style="flex:1;display:flex;align-items:center;gap:0;cursor:pointer">
+        <i class="ti ${icon}" style="font-size:12px;margin-right:6px"></i>
+        ${g.name} <span style="font-size:11px;opacity:.7;font-weight:400;margin-left:5px">(${gEmps.length} คน)</span>
+      </span>
+      <button onclick="event.stopPropagation();printSingleGroup('${gid}')" title="พิมพ์รายงานกลุ่มนี้เดี่ยวๆ"
+        style="height:22px;padding:0 8px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,0.4);border-radius:5px;background:rgba(255,255,255,0.18);color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:4px;margin-right:4px;font-family:inherit;white-space:nowrap;transition:background .15s"
+        onmouseover="this.style.background='rgba(255,255,255,0.32)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">
+        <i class="ti ti-printer" style="font-size:12px"></i> พิมพ์กลุ่มนี้
+      </button>
+    </td></tr>`;
+
+    let lgW=0,lgOt=0,lgPay=0,lgDP=0,lgOP=0;
+    if(!col){
+      gEmps.forEach(emp=>{
+        rowN++;
+        const{workDays,dayPay,otH,otPay,pay}=calcEmp(emp);
+        lgW+=workDays;lgOt+=otH;lgPay+=pay;lgDP+=dayPay;lgOP+=otPay;
+
+        let mulCells='', otCells='';
+        for(let d=1;d<=days;d++){
+          const k=aKey(emp.id,d);
+          const r=att[k]||{mul:'',ot:''};
+          const mc=mulClass(r.mul);
+          const mulVal=r.mul===''||r.mul===0||r.mul==='0'?'':r.mul;
+          const otVal=r.ot===''||r.ot===0||r.ot==='0'?'':r.ot;
+          const mulLabel=mulVal===''?'·':mulVal;
+          const otLabel=otVal===''?'·':otVal;
+          // site dot
+          const siteObj=r.site?sites.find(s=>s.id===r.site):null;
+          const siteDot=siteObj?`<span title="${siteObj.name}" style="position:absolute;top:1px;right:1px;width:5px;height:5px;border-radius:50%;background:#7c3aed;opacity:.85"></span>`:'';
+          mulCells+=`<td class="dcell" style="position:relative">
+            <div class="cy-mul ${mc}" onclick="cycleMul('${emp.id}',${d},this)" title="${siteObj?siteObj.name:'คลิก: เปลี่ยนวัน | คลิกขวา: เลือกสถานที่'}" 
+              oncontextmenu="openSitePicker(event,'${emp.id}',${d});return false;">${mulLabel}</div>
+            ${siteDot}
+          </td>`;
+          otCells+=`<td class="dcell">
+            <div class="cy-ot${otVal!==''?' cy-ot-on':''}" onclick="cycleOt('${emp.id}',${d},this)" title="คลิก: +ชม. | คลิกขวา: ล้าง"
+              oncontextmenu="clearOt('${emp.id}',${d},this);return false;">${otLabel}</div>
+          </td>`;
+        }
+        body+=`<tr data-eid="${emp.id}">
+          <td class="sd0" rowspan="2" style="vertical-align:middle">${rowN}</td>
+          <td class="sd1" rowspan="2" style="vertical-align:middle">
+            <span style="flex:1">${emp.name}</span>
+          </td>
+          <td class="sd2" rowspan="2" style="vertical-align:middle"><input class="ni" type="number" value="${emp.wage}" onchange="updWage('${emp.id}',this.value)" style="width:66px" title="ค่าแรง/วัน"/></td>
+          <td class="sd3" rowspan="2" style="vertical-align:middle;font-size:10px;color:#185FA5;text-align:center">${(emp.wage/8*1.5).toFixed(2)}</td>
+          ${mulCells}
+          <td class="col-s rc-wd" rowspan="2" style="vertical-align:middle">${workDays}</td>
+          <td class="col-s rc-ot" rowspan="2" style="vertical-align:middle;color:#185FA5">${otH||'—'}</td>
+          <td class="col-s rc-dp" rowspan="2" style="vertical-align:middle;color:#0F6E56">${dayPay.toLocaleString()}</td>
+          <td class="col-s rc-op" rowspan="2" style="vertical-align:middle;color:#185FA5">${otPay?otPay.toLocaleString():'—'}</td>
+          <td class="col-p rc-pay" rowspan="2" style="vertical-align:middle;font-size:13px;font-weight:700;border-left:2px solid #34d399">${pay.toLocaleString()}</td>
+          <td rowspan="2" style="padding:2px 3px;vertical-align:middle">
+            <div style="display:flex;gap:2px;justify-content:center">
+              <button class="btn edit-btn" onclick="openEdit('${emp.id}')" title="แก้ไข"><i class="ti ti-pencil" style="font-size:11px"></i></button>
+              <button class="btn edit-btn" onclick="openFinance('${emp.id}')" title="การเงิน/หักเงิน" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-wallet" style="font-size:11px"></i></button>
+              <button class="btn edit-btn" onclick="openSlip('${emp.id}')" title="สลิป" style="color:#0F6E56;border-color:#86efac"><i class="ti ti-receipt" style="font-size:11px"></i></button>
+              <button class="btn smd" onclick="delEmp('${emp.id}')" title="ลบ"><i class="ti ti-trash" style="font-size:11px"></i></button>
+            </div>
+          </td>
+        </tr>
+        <tr data-eid-ot="${emp.id}">${otCells}</tr>`;
+      });
+      body+=`<tr class="gtrow">
+        <td colspan="4" style="text-align:right;padding-right:8px">รวม ${g.name}</td>
+        <td colspan="${days}"></td>
+        <td>${lgW}</td>
+        <td style="color:#185FA5">${lgOt||'—'}</td>
+        <td style="color:#0F6E56">${lgDP.toLocaleString()}</td>
+        <td style="color:#185FA5">${lgOP?lgOP.toLocaleString():'—'}</td>
+        <td style="font-weight:700;color:#065f46;font-size:12px;border-left:2px solid #34d399">${lgPay.toLocaleString()}</td>
+        <td></td>
+      </tr>
+      <tr class="gtrow"><td colspan="${days+10}"></td></tr>`;
+    }
+    gPay+=lgPay;gWork+=lgW;gOtH+=lgOt;gDP+=lgDP;gOP+=lgOP;
+    gStats.push({name:g.name,emp:gEmps.length,work:lgW,ot:lgOt,dayPay:lgDP,otPay:lgOP,pay:lgPay});
+  });
+
+  document.getElementById('tBody').innerHTML=body;
+
+  const gsRows=gStats.map(g=>{
+    const pct=gPay>0?((g.pay/gPay)*100).toFixed(1):0;
+    const bw=gPay>0?Math.round((g.pay/gPay)*90):0;
+    return`<tr>
+      <td><b>${g.name}</b></td>
+      <td style="text-align:right">${g.emp} คน</td>
+      <td style="text-align:right">${g.work} วัน</td>
+      <td style="text-align:right;color:#0F6E56">${g.dayPay.toLocaleString()} ฿</td>
+      <td style="text-align:right;color:#185FA5">${g.ot||0} ชม. / ${g.otPay.toLocaleString()} ฿</td>
+      <td style="text-align:right;font-weight:700;color:#27500A">${g.pay.toLocaleString()} ฿</td>
+      <td><div style="display:flex;align-items:center;gap:5px">
+        <div style="width:${bw}px;height:6px;background:#0F6E56;border-radius:3px"></div>
+        <span style="font-size:11px">${pct}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('groupSumWrap').innerHTML=`<table class="gsumtbl">
+    <thead><tr>
+      <th>กลุ่ม</th><th style="text-align:right">พนักงาน</th><th style="text-align:right">วันทำงาน</th>
+      <th style="text-align:right">ค่าแรงวัน</th><th style="text-align:right">OT</th>
+      <th style="text-align:right">รวมค่าแรง</th><th style="min-width:110px;text-align:right">สัดส่วน</th>
+    </tr></thead>
+    <tbody>${gsRows}</tbody>
+    <tfoot><tr class="foot">
+      <td>รวมทั้งหมด</td>
+      <td style="text-align:right">${filteredBySite.length} คน</td>
+      <td style="text-align:right">${gWork} วัน</td>
+      <td style="text-align:right">${gDP.toLocaleString()} ฿</td>
+      <td style="text-align:right">${gOtH||0} ชม. / ${gOP.toLocaleString()} ฿</td>
+      <td style="text-align:right">${gPay.toLocaleString()} ฿</td>
+      <td></td>
+    </tr></tfoot>
+  </table>`;
+
+  document.getElementById('totalCards').innerHTML=`
+    <div class="scard"><div class="lbl">รวมค่าแรงทั้งหมด</div><div class="val" style="color:#27500A">${gPay.toLocaleString()} ฿</div></div>
+    <div class="scard"><div class="lbl">ค่าแรงรายวัน</div><div class="val" style="color:#0F6E56">${gDP.toLocaleString()} ฿</div></div>
+    <div class="scard"><div class="lbl">ค่าโอที</div><div class="val" style="color:#185FA5">${gOP.toLocaleString()} ฿</div></div>
+    <div class="scard"><div class="lbl">รวม OT</div><div class="val">${gOtH} ชม.</div></div>
+  `;
+
+  // Site summary
+  const siteSec=document.getElementById('siteSumSection');
+  const siteWrap=document.getElementById('siteSumWrap');
+  if(sites.length){
+    siteSec.style.display='';
+    const days2=dim(cY,cM);
+    let siteRows='';
+    let totalSitePay=0;
+    sites.forEach(s=>{
+      let sw=0,sot=0,sdp=0,sop=0,sp=0,semp=new Set();
+      filteredBySite.forEach(e=>{
+        for(let d=1;d<=days2;d++){
+          const r=att[aKey(e.id,d)];
+          if(r&&r.site===s.id){
+            const mul=Number(r.mul)||0;
+            const ot=Number(r.ot)||0;
+            if(mul>0){sw++;sdp+=e.wage*mul;semp.add(e.id);}
+            sot+=ot;
+          }
+        }
+      });
+      const otRate2=semp.size>0?(filteredBySite.filter(e=>semp.has(e.id)).reduce((a,e)=>a+e.wage,0)/semp.size/8*1.5):0;
+      sop=Math.round(sot*otRate2);
+      sp=Math.round(sdp)+sop;
+      totalSitePay+=sp;
+      siteRows+=`<tr><td><b><i class="ti ti-map-pin" style="font-size:11px;color:#7c3aed"></i> ${s.name}</b></td>
+        <td style="text-align:right">${semp.size} คน</td>
+        <td style="text-align:right">${sw} วัน</td>
+        <td style="text-align:right;color:#0F6E56">${Math.round(sdp).toLocaleString()} ฿</td>
+        <td style="text-align:right;color:#185FA5">${sot||0} ชม. / ${sop.toLocaleString()} ฿</td>
+        <td style="text-align:right;font-weight:700;color:#27500A">${sp.toLocaleString()} ฿</td>
+        <td><button onclick="printSingleSite('${s.id}')" style="height:24px;padding:0 8px;font-size:11px;font-weight:600;border:1px solid #c4b5fd;border-radius:5px;background:#faf5ff;color:#7c3aed;cursor:pointer;font-family:inherit">🖨️ พิมพ์</button></td>
+      </tr>`;
+    });
+    siteWrap.innerHTML=`<table class="gsumtbl">
+      <thead><tr><th>สถานที่</th><th style="text-align:right">พนักงาน</th><th style="text-align:right">วัน-คน</th>
+      <th style="text-align:right">ค่าแรงวัน</th><th style="text-align:right">OT</th>
+      <th style="text-align:right">รวมค่าแรง</th><th style="min-width:70px"></th></tr></thead>
+      <tbody>${siteRows}</tbody>
+      <tfoot><tr class="foot"><td>รวมทุกสถานที่</td><td></td><td></td><td></td><td></td><td style="text-align:right">${totalSitePay.toLocaleString()} ฿</td><td></td></tr></tfoot>
+    </table>`;
+  } else {
+    siteSec.style.display='none';
+  }
+}
+
+// ─── Add / Edit Employee ─────────────────────────────────────
+function openAdd(){
+  syncSels();
+  document.getElementById('editEmpId').value='';
+  document.getElementById('addModalTitle').textContent='เพิ่มพนักงาน';
+  document.getElementById('iName').value='';
+  document.getElementById('iWage').value=400;
+  document.getElementById('otRatePreview').textContent=(400/8*1.5).toFixed(2);
+  document.getElementById('addModal').classList.add('open');
+}
+function openEdit(eid){
+  const emp=employees.find(e=>e.id===eid);if(!emp)return;
+  syncSels();
+  document.getElementById('editEmpId').value=eid;
+  document.getElementById('addModalTitle').textContent='แก้ไขข้อมูลพนักงาน';
+  document.getElementById('iName').value=emp.name;
+  document.getElementById('iWage').value=emp.wage;
+  document.getElementById('otRatePreview').textContent=(emp.wage/8*1.5).toFixed(2);
+  const sel=document.getElementById('iGrp');sel.value=emp.group;
+  document.getElementById('addModal').classList.add('open');
+}
+function saveEmp(){
+  const name=document.getElementById('iName').value.trim();
+  if(!name){alert('กรุณากรอกชื่อ');return;}
+  const eid=document.getElementById('editEmpId').value;
+  const grp=document.getElementById('iGrp').value||groups[0]?.id;
+  const wage=Number(document.getElementById('iWage').value)||400;
+  if(eid){
+    const emp=employees.find(e=>e.id===eid);
+    if(emp){emp.name=name;emp.group=grp;emp.wage=wage;}
+  }else{
+    employees.push({id:'e'+Date.now(),name,group:grp,wage});
+  }
+  initAtt();closeM('addModal');render();saveData();
+}
+
+// ─── Groups ──────────────────────────────────────────────────
+function openGrp(){syncSels();renderGList();document.getElementById('iGrpName').value='';document.getElementById('grpModal').classList.add('open');}
+function renderGList(){
+  document.getElementById('gList').innerHTML=groups.map(g=>`
+    <div class="gitem">
+      <span>${g.name}</span>
+      <div style="display:flex;gap:5px;align-items:center">
+        <span style="font-size:11px;color:var(--text3)">${employees.filter(e=>e.group===g.id).length} คน</span>
+        <button class="btn smd" onclick="delGrp('${g.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+function saveGrp(){
+  const name=document.getElementById('iGrpName').value.trim();if(!name)return;
+  groups.push({id:'g'+Date.now(),name});
+  document.getElementById('iGrpName').value='';syncSels();renderGList();render();saveData();
+}
+function delGrp(gid){
+  if(employees.some(e=>e.group===gid)){alert('มีพนักงานในกลุ่มนี้ กรุณาย้ายพนักงานออกก่อน');return;}
+  groups=groups.filter(g=>g.id!==gid);renderGList();syncSels();render();saveData();
+}
+
+function closeM(id){document.getElementById(id).classList.remove('open')}
+
+// ─── Clear All Employees ─────────────────────────────────────
+function clearAllEmployees(){
+  if(!confirm('⚠️ เคลียข้อมูลวันทำงานและ OT ทั้งหมด?\n\n(รายชื่อพนักงานและกลุ่มจะยังคงอยู่)\nการกระทำนี้ไม่สามารถย้อนกลับได้'))return;
+  att={};
+  syncSels();render();saveData();
+  alert('✅ เคลียข้อมูลวันทำงานและ OT ทั้งหมดเรียบร้อยแล้ว');
+}
+
+// ─── Export CSV ──────────────────────────────────────────────
+function exportCSV(){
+  const days=dim(cY,cM);
+  const hRow1=['ชื่อพนักงาน','กลุ่ม','ค่าแรง/วัน'];
+  const hRow2=['','',''];
+  for(let d=1;d<=days;d++){hRow1.push(`${d}`);hRow2.push(`OT`);}
+  hRow1.push('วันทำงาน','OT รวม (ชม.)','ค่าแรงวัน','ค่า OT','รวมค่าแรง');
+  hRow2.push('','','','','');
+  const rows=[hRow1,hRow2];
+
+  employees.forEach(emp=>{
+    const g=groups.find(x=>x.id===emp.group);
+    const{workDays,dayPay,otH,otPay,otRate,pay}=calcEmp(emp);
+    const mulRow=[emp.name,g?g.name:'',emp.wage];
+    const otRow=['','',''];
+    for(let d=1;d<=days;d++){
+      const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+      mulRow.push(r.mul===''?'':r.mul);
+      otRow.push(r.ot===''?'':r.ot);
+    }
+    mulRow.push(workDays,otH,dayPay,otPay,pay);
+    otRow.push('','','','','');
+    rows.push(mulRow,otRow);
+  });
+
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const bom='\uFEFF';
+  const blob=new Blob([bom+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`payroll_${cY}_${String(cM+1).padStart(2,'0')}.csv`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Export Excel ─────────────────────────────────────────────
+function exportExcel(){
+  if(typeof XLSX==='undefined'){alert('ไลบรารี XLSX ยังไม่พร้อม');return;}
+  const days=dim(cY,cM);
+  const hRow1=['ชื่อพนักงาน','กลุ่ม','ค่าแรง/วัน'];
+  const hRow2=['','',''];
+  for(let d=1;d<=days;d++){hRow1.push(`${d}`);hRow2.push('OT');}
+  hRow1.push('วันทำงาน','OT(ชม.)','ค่าแรงวัน','ค่าOT','รวมค่าแรง');
+  hRow2.push('','','','','');
+
+  const aoa=[hRow1,hRow2];
+  const merges=[
+    {s:{r:0,c:0},e:{r:1,c:0}},
+    {s:{r:0,c:1},e:{r:1,c:1}},
+    {s:{r:0,c:2},e:{r:1,c:2}},
+  ];
+  const sumCols=[3+days,3+days+1,3+days+2,3+days+3,3+days+4];
+  sumCols.forEach(c=>merges.push({s:{r:0,c},e:{r:1,c}}));
+
+  let rowIdx=2;
+  employees.forEach(emp=>{
+    const g=groups.find(x=>x.id===emp.group);
+    const{workDays,dayPay,otH,otPay,pay}=calcEmp(emp);
+    const mulRow=[emp.name,g?g.name:'',emp.wage];
+    const otRow=['','',''];
+    for(let d=1;d<=days;d++){
+      const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+      mulRow.push(r.mul===''?null:Number(r.mul));
+      otRow.push(r.ot===''?null:Number(r.ot));
+    }
+    mulRow.push(workDays,otH,dayPay,otPay,pay);
+    otRow.push(null,null,null,null,null);
+    aoa.push(mulRow,otRow);
+    // merge fixed cols and summary cols across 2 rows
+    [0,1,2,...sumCols].forEach(c=>{
+      merges.push({s:{r:rowIdx,c},e:{r:rowIdx+1,c}});
+    });
+    rowIdx+=2;
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!merges']=merges;
+  ws['!cols']=[{wch:20},{wch:14},{wch:10},...Array(days).fill({wch:5}),{wch:8},{wch:8},{wch:10},{wch:10},{wch:12}];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,`${THAI_M[cM]} ${cY+543}`);
+  XLSX.writeFile(wb,`payroll_${cY}_${String(cM+1).padStart(2,'0')}.xlsx`);
+}
+
+// ─── Import ──────────────────────────────────────────────────
+// ─── Import helpers ──────────────────────────────────────────
+let importMode=''; // 'emp' | 'att'
+
+function openImport(){
+  importRows=[];importMode='';
+  document.getElementById('importPreview').innerHTML='';
+  document.getElementById('importConfirmBtn').style.display='none';
+  document.getElementById('importFile').value='';
+  document.getElementById('importModal').classList.add('open');
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file)processImportFile(file);
+}
+function handleFileSelect(e){
+  const file=e.target.files[0];
+  if(file)processImportFile(file);
+}
+function processImportFile(file){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext)){alert('รองรับเฉพาะ .xlsx, .xls, .csv');return;}
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    let wb_data;
+    if(ext==='csv'){
+      wb_data=XLSX.read(ev.target.result,{type:'string'});
+    }else{
+      wb_data=XLSX.read(ev.target.result,{type:'array'});
+    }
+
+    // ── ตรวจว่าเป็นไฟล์ Template (มีชีท "บันทึกการเข้างาน") หรือไม่
+    const attSheetName=wb_data.SheetNames.find(n=>n.includes('บันทึก')||n.toLowerCase().includes('attendance'));
+    if(attSheetName){
+      // Template mode: อ่าน 2 sheets
+      const empSheetName=wb_data.SheetNames.find(n=>n.includes('รายชื่อ')||n.toLowerCase().includes('employee'));
+      const empJson=empSheetName?XLSX.utils.sheet_to_json(wb_data.Sheets[empSheetName],{defval:''}):[];
+      const attJson=XLSX.utils.sheet_to_json(wb_data.Sheets[attSheetName],{defval:''});
+      parseAttendanceImport(empJson,attJson);
+    }else{
+      // Single sheet — ตรวจว่ามีคอลัมน์วันที่เป็นตัวเลข (export format ใหม่) หรือไม่
+      const ws=wb_data.Sheets[wb_data.SheetNames[0]];
+      const json=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
+      const keys=json.length>0?Object.keys(json[0]).map(k=>k.toLowerCase().trim()):[];
+      const hasDateCol=keys.some(k=>k==='วันที่'||k==='date'||k==='day'||k==='วัน');
+      const hasNameCol=keys.some(k=>k==='ชื่อ'||k==='ชื่อพนักงาน'||k==='name');
+      if(json.length>0&&Object.keys(json[0]).some(k=>/^\d{1,2}$/.test(String(k).trim()))){
+        parsePayrollExport(json);
+      }else if(hasDateCol&&hasNameCol){
+        parseDateName(json);
+      }else{
+        parseEmpOnly(json);
+      }
+    }
+  };
+  if(ext==='csv')reader.readAsText(file,'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+// ── Mode 3: Import ไฟล์ที่ export จากระบบ (single sheet, combined) ─
+function parsePayrollExport(json){
+  importMode='payroll';
+  window._rawImportJson=json;
+  // กรองเฉพาะแถวที่มีชื่อ (mul rows) สำหรับ preview
+  importRows=json.filter(r=>{
+    const name=String(r['ชื่อพนักงาน']||'').trim();
+    return name!==''&&name!=='ชื่อพนักงาน';
+  });
+  const count=importRows.length;
+  const preview=`
+    <div style="font-size:12px;font-weight:600;padding:8px 0 4px;color:var(--green)">✅ พบข้อมูล ${count} รายการ (รูปแบบ payroll export)</div>
+    <div class="import-preview">
+      <table><thead><tr><th>ชื่อ</th><th>กลุ่ม</th><th>฿/วัน</th></tr></thead>
+      <tbody>${importRows.slice(0,8).map(r=>`<tr>
+        <td>${r['ชื่อพนักงาน']||'-'}</td><td>${r['กลุ่ม']||'-'}</td><td>${r['ค่าแรง/วัน']||400}</td>
+      </tr>`).join('')}
+      ${count>8?`<tr><td colspan="3" style="text-align:center;color:var(--text3)">...และอีก ${count-8} รายการ</td></tr>`:''}
+      </tbody></table>
+    </div>`;
+  document.getElementById('importPreview').innerHTML=preview;
+  document.getElementById('importConfirmBtn').style.display='inline-flex';
+  document.getElementById('importConfirmBtn').innerHTML='<i class="ti ti-check"></i> นำเข้าข้อมูล';
+}
+
+function confirmPayrollImport(){
+  // ดึง raw json ใหม่จาก importRows แต่ต้องรวม OT row ด้วย
+  // importRows มีแค่แถวที่ชื่อไม่ว่าง (mul rows)
+  // ต้องหา OT rows จาก rawImportJson ที่เก็บไว้
+  const json=window._rawImportJson||importRows;
+  let empAdded=0,attSet=0;
+  let i=0;
+  while(i<json.length){
+    const mulRow=json[i];
+    const name=String(mulRow['ชื่อพนักงาน']||'').trim();
+    if(!name||name==='ชื่อพนักงาน'){i++;continue;}
+    // แถวถัดไปคือ OT row (ชื่อว่าง)
+    const otRow=(i+1<json.length&&String(json[i+1]['ชื่อพนักงาน']||'').trim()==='')?json[i+1]:null;
+    i+=otRow?2:1;
+
+    const grpName=String(mulRow['กลุ่ม']||'').trim();
+    const wage=Number(mulRow['ค่าแรง/วัน'])||400;
+    let gid=groups[0]?.id||'g1';
+    if(grpName){
+      let g=groups.find(x=>x.name===grpName);
+      if(!g){g={id:'g'+Date.now()+Math.random(),name:grpName};groups.push(g);}
+      gid=g.id;
+    }
+    let emp=employees.find(e=>e.name===name);
+    if(!emp){
+      emp={id:'e'+Date.now()+Math.random(),name,group:gid,wage};
+      employees.push(emp);empAdded++;
+    }else{emp.wage=wage;emp.group=gid;}
+    initAtt();
+    for(let d=1;d<=31;d++){
+      const mulVal=mulRow[String(d)];
+      const otVal=otRow?otRow[String(d)]:null;
+      const m=mulVal===undefined||mulVal===null||mulVal===''?'':mulVal;
+      const o=otVal===undefined||otVal===null||otVal===''?'':otVal;
+      if(m===''&&o==='')continue;
+      const k=aKey(emp.id,d);
+      if(!att[k])att[k]={mul:'',ot:''};
+      if(m!=='')att[k].mul=Number(m)||'';
+      if(o!=='')att[k].ot=Number(o)||'';
+      attSet++;
+    }
+  }
+  closeM('importModal');syncSels();render();saveData();
+  alert(`นำเข้าสำเร็จ!\n✅ ข้อมูลการเข้างาน: ${attSet} วัน\n👤 เพิ่ม/อัปเดตพนักงาน: ${empAdded} คน`);
+}
+// ── Mode 4: Import ไฟล์ที่มีเฉพาะ วันที่ + ชื่อพนักงาน ──────────
+function parseDateName(json){
+  importMode='datename';
+
+  // Helper: แปลงวันที่ → DD เท่านั้น
+  function parseDayOnly(val){
+    if(val===undefined||val===null||val==='')return '';
+    if(typeof val==='number'){
+      if(val>31){const d=new Date(Math.round((val-25569)*86400*1000));return d.getUTCDate();}
+      return Math.round(val);
+    }
+    const s=String(val).trim();
+    const m1=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(m1)return parseInt(m1[1],10);
+    const m2=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if(m2)return parseInt(m2[3],10);
+    const m3=s.match(/^(\d{1,2})\s/);
+    if(m3)return parseInt(m3[1],10);
+    const n=parseInt(s,10);
+    if(!isNaN(n)&&n>=1&&n<=31)return n;
+    return '';
+  }
+
+  // Map คอลัมน์
+  const dateKeys=['วันที่','date','day','วัน','Date','DAY'];
+  const nameKeys=['ชื่อพนักงาน','ชื่อ-นามสกุล','ชื่อ','name','Name','ชื่อ พนักงาน'];
+  const otKeys=['โอที','ot','ot (ชั่วโมง)','otชม.','โอที (ชม.)','overtime','ot(ชม.)','ot ชม','ot ชั่วโมง','overtime (hr)','ชม.ot','ชั่วโมงot','c','col_c'];
+  const siteKeys=['สถานที่','สถานที่ทำงาน','site','location','สถานที่','สาขา','สาขาที่ทำงาน'];
+
+  importRows=json.map(row=>{
+    const r={};
+    const rowKeysLower={};
+    const allKeys=Object.keys(row);
+    Object.keys(row).forEach(k=>{rowKeysLower[k.toLowerCase().trim()]=row[k];rowKeysLower[k]=row[k];});
+    // หา day
+    for(const dk of dateKeys){if(rowKeysLower[dk]!==undefined){r.day=parseDayOnly(rowKeysLower[dk]);break;}}
+    // หา name
+    for(const nk of nameKeys){if(rowKeysLower[nk]!==undefined&&String(rowKeysLower[nk]).trim()){r.name=String(rowKeysLower[nk]).trim();break;}}
+    // หา ot — ลองจาก otKeys ก่อน แล้ว fallback ไปคอลัมน์ที่ 3 (index 2)
+    let otFound=false;
+    for(const ok of otKeys){if(rowKeysLower[ok]!==undefined&&rowKeysLower[ok]!==''){r.ot=Number(rowKeysLower[ok])||0;otFound=true;break;}}
+    if(!otFound&&allKeys.length>=3){
+      // ลองใช้คอลัมน์ที่ 3 (C) ถ้าไม่ใช่คอลัมน์ที่ match วันที่/ชื่อไปแล้ว
+      const thirdKey=allKeys[2];
+      const thirdVal=row[thirdKey];
+      if(thirdVal!==undefined&&thirdVal!==''){
+        const n=Number(thirdVal);
+        if(!isNaN(n)&&n>=0&&n<=24)r.ot=n;
+      }
+    }
+    // หา site
+    for(const sk of siteKeys){if(rowKeysLower[sk]!==undefined&&String(rowKeysLower[sk]).trim()){r.siteName=String(rowKeysLower[sk]).trim();break;}}
+    return r;
+  }).filter(r=>r.name&&r.day!==''&&r.day!==undefined&&!isNaN(r.day));
+
+  if(!importRows.length){
+    showImportError('ไม่พบข้อมูล กรุณาตรวจสอบว่ามีคอลัมน์ วันที่ และ ชื่อพนักงาน');return;
+  }
+
+  const empNamesInSystem=new Set(employees.map(e=>e.name.trim()));
+  const notFound=[...new Set(importRows.map(r=>r.name))].filter(n=>!empNamesInSystem.has(n));
+
+  let warnHtml='';
+  if(notFound.length){
+    const grpOptions=groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    const newEmpRows=notFound.map(n=>{
+      // ตรวจสาเหตุ: ชื่อซ้ำในระบบ (นามสกุลตรงกัน), ชื่อซ้ำในไฟล์, หรือพนักงานใหม่
+      const lastName=n.split(' ').slice(-1)[0];
+      const hasSimilarInSystem=lastName&&[...empNamesInSystem].some(e=>e!==n&&e.includes(lastName));
+      const dupCountInFile=notFound.filter(x=>x!==n&&x.split(' ').slice(-1)[0]===lastName&&lastName.length>1).length;
+      let reasonBadge='';
+      if(hasSimilarInSystem){
+        reasonBadge=`<span style="background:#FCEBEB;color:#A32D2D;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap">ชื่อคล้าย/อาจซ้ำในระบบ</span>`;
+      } else if(dupCountInFile>0){
+        reasonBadge=`<span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap">ชื่อซ้ำในไฟล์</span>`;
+      } else {
+        reasonBadge=`<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap">พนักงานใหม่</span>`;
+      }
+      return`
+      <tr style="background:#FFFBEB" id="newr-${CSS.escape(n)}" data-newname="${n.replace(/"/g,'&quot;')}">
+        <td style="padding:4px 6px;font-weight:600">${n}</td>
+        <td style="padding:4px 6px">${reasonBadge}</td>
+        <td style="padding:4px 6px"><select class="new-emp-grp" data-name="${n}" style="width:100%;height:28px;font-size:11px;border:0.5px solid #cbd5e1;border-radius:4px;font-family:inherit">${grpOptions}</select></td>
+        <td style="padding:4px 6px"><input class="new-emp-wage" data-name="${n}" type="number" value="400" min="0" style="width:80px;height:28px;font-size:11px;border:0.5px solid #cbd5e1;border-radius:4px;text-align:center;font-family:inherit"/></td>
+        <td style="padding:4px 2px;text-align:center"><button onclick="removeNewEmpRow(this)" title="ไม่นำเข้าพนักงานคนนี้" style="border:none;background:transparent;cursor:pointer;color:#ef4444;font-size:15px;line-height:1;padding:2px 4px;border-radius:4px" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">✕</button></td>
+      </tr>`;
+    }).join('');
+    warnHtml=`<div style="margin-top:10px;padding:10px;background:#FFF7ED;border:0.5px solid #FCD34D;border-radius:6px;font-size:11px">
+      <div style="font-weight:700;color:#92400E;margin-bottom:4px">👤 จะเพิ่มพนักงานใหม่ ${notFound.length} คนอัตโนมัติ — กรุณาตรวจสอบข้อมูลก่อนนำเข้า:</div>
+      <div style="font-size:10px;color:#92400E;margin-bottom:6px;opacity:.8">กด ✕ เพื่อข้ามพนักงานที่ไม่ต้องการเพิ่ม</div>
+      <div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;font-size:10px">
+        <span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:10px;font-weight:600">🟢 พนักงานใหม่ — ยังไม่มีในระบบ</span>
+        <span style="background:#FCEBEB;color:#A32D2D;padding:2px 8px;border-radius:10px;font-weight:600">🔴 ชื่อคล้าย/อาจซ้ำในระบบ — ตรวจสอบด้วย</span>
+        <span style="background:#FEF3C7;color:#92400E;padding:2px 8px;border-radius:10px;font-weight:600">🟡 ชื่อซ้ำในไฟล์ — มีรายการซ้ำ</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#FEF3C7">
+          <th style="padding:4px 6px;text-align:left">ชื่อพนักงาน</th>
+          <th style="padding:4px 6px;text-align:left">สาเหตุ</th>
+          <th style="padding:4px 6px;text-align:left">กลุ่ม/แผนก</th>
+          <th style="padding:4px 6px;text-align:left">ค่าแรง/วัน (฿)</th>
+          <th style="padding:4px 2px;width:28px"></th>
+        </tr></thead>
+        <tbody id="newEmpTbodyDN">${newEmpRows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  const hasOT=importRows.some(r=>r.ot>0);
+  const hasSite=importRows.some(r=>r.siteName);
+  const preview=`
+    <div style="font-size:12px;font-weight:600;padding:8px 0 4px;color:var(--green)">
+      ✅ พบข้อมูล ${importRows.length} รายการ · วันที่ + ชื่อพนักงาน${hasOT?' + โอที':''}${hasSite?' + <span style="color:#7c3aed">สถานที่</span>':''}
+    </div>
+    <div class="import-preview">
+      <table><thead><tr>
+        <th style="text-align:center">วันที่ (DD)</th>
+        <th>ชื่อพนักงาน</th>
+        ${hasOT?'<th style="text-align:center">โอที (ชม.)</th>':''}
+        ${hasSite?'<th style="color:#7c3aed">สถานที่</th>':''}
+        <th style="text-align:center">สถานะ</th>
+        <th style="text-align:left;min-width:120px">สาเหตุ</th>
+      </tr></thead>
+      <tbody>${importRows.map(r=>{
+        const found=empNamesInSystem.has(r.name);
+        // ตรวจสอบชื่อซ้ำในไฟล์นำเข้า
+        const nameCountInFile=importRows.filter(x=>x.name===r.name).length;
+        const dupInFile=!found && nameCountInFile>1;
+        let reasonHtml='';
+        if(found){
+          reasonHtml='<span style="color:#0F6E56;font-size:11px">ข้อมูลครบถ้วน</span>';
+        } else {
+          // ตรวจว่าชื่อซ้ำกับพนักงานที่มีอยู่ใกล้เคียงหรือเปล่า (fuzzy: นามสกุลซ้ำ)
+          const lastName=r.name.split(' ').slice(-1)[0];
+          const hasSimilar=lastName&&[...empNamesInSystem].some(n=>n!==r.name&&n.includes(lastName));
+          if(hasSimilar){
+            reasonHtml='<span style="background:#FCEBEB;color:#A32D2D;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600">ชื่อคล้ายกัน/อาจซ้ำ</span>';
+          } else {
+            reasonHtml='<span style="background:#FFF7ED;color:#92400E;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:600">พนักงานใหม่</span>';
+          }
+        }
+        return`<tr>
+          <td style="text-align:center;color:#185FA5;font-weight:700">${r.day}</td>
+          <td>${r.name}</td>
+          ${hasOT?`<td style="text-align:center;color:#185FA5">${r.ot||'-'}</td>`:''}
+          ${hasSite?`<td style="color:#7c3aed;font-size:11px">${r.siteName||'-'}</td>`:''}
+          <td style="text-align:center">${found?'<span style="color:#0F6E56">✓</span>':'<span style="color:#D97706">ใหม่</span>'}</td>
+          <td style="padding:4px 8px">${reasonHtml}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>
+    ${warnHtml}`;
+  document.getElementById('importPreview').innerHTML=preview;
+  document.getElementById('importConfirmBtn').style.display='inline-flex';
+  document.getElementById('importConfirmBtn').innerHTML='<i class="ti ti-check"></i> นำเข้าการเข้างาน';
+}
+
+// ── Google Sheet Import ────────────────────────────────────────
+function switchImportTab(tab){
+  const isFile=tab==='file';
+  document.getElementById('panelFile').style.display=isFile?'':'none';
+  document.getElementById('panelGsheet').style.display=isFile?'none':'';
+  document.getElementById('tabFile').style.background=isFile?'var(--primary)':'var(--card)';
+  document.getElementById('tabFile').style.color=isFile?'#fff':'var(--text2)';
+  document.getElementById('tabGsheet').style.background=isFile?'var(--card)':'var(--primary)';
+  document.getElementById('tabGsheet').style.color=isFile?'var(--text2)':'#fff';
+  document.getElementById('importPreview').innerHTML='';
+  document.getElementById('importConfirmBtn').style.display='none';
+  // reset datalist
+  const dl=document.getElementById('sheetNameList');
+  if(dl)dl.innerHTML='';
+  const inp=document.getElementById('scriptSheetName');
+  if(inp)inp.value='';
+}
+
+function populateSheetDropdown(sheetNames,selected){
+  const dl=document.getElementById('sheetNameList');
+  if(!dl)return;
+  dl.innerHTML='';
+  // trim และเรียงตามตัวอักษร
+  [...sheetNames].map(n=>n.trim()).filter(n=>n)
+    .sort((a,b)=>a.localeCompare(b,'th'))
+    .forEach(name=>{
+      const opt=document.createElement('option');
+      opt.value=name;
+      dl.appendChild(opt);
+    });
+  // เซ็ตค่าใน input ถ้ายังว่าง
+  const inp=document.getElementById('scriptSheetName');
+  if(inp&&!inp.value&&selected)inp.value=selected.trim();
+}
+
+async function fetchGsheet(){
+  const rawUrl=(document.getElementById('scriptUrl').value||'').trim();
+  const btn=document.getElementById('fetchGsheetBtn');
+
+  if(!rawUrl){
+    showGsheetStatus('❌ กรุณาวาง URL ของ Apps Script','#fee2e2','#b91c1c');return;
+  }
+
+  if(!isAppsScriptUrl(rawUrl)){
+    showGsheetStatus('❌ URL ไม่ถูกต้อง — กรุณาวาง URL ของ Apps Script (script.google.com/macros/s/...)','#fee2e2','#b91c1c');
+    return;
+  }
+
+  btn.disabled=true;
+  btn.innerHTML='<i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> กำลังดึง...';
+  showGsheetStatus('⏳ กำลังเชื่อมต่อ...','#f0f7ff','#185FA5');
+  document.getElementById('importPreview').innerHTML='';
+  document.getElementById('importConfirmBtn').style.display='none';
+
+  try{
+    // ── Step 1: ดึงรายชื่อ Sheets ก่อน (ถ้า Apps Script รองรับ ?action=sheets) ──
+    const sel=document.getElementById('scriptSheetName');
+    const currentSheet=sel.value||'';
+    let sheetNames=null;
+    try{
+      const r=await fetch(rawUrl+'?action=sheets');
+      if(r.ok){
+        const j=await r.json();
+        if(Array.isArray(j)&&j.length>0&&typeof j[0]==='string'){
+          sheetNames=j;
+        }else if(j&&Array.isArray(j.sheets)){
+          sheetNames=j.sheets;
+        }
+      }
+    }catch(e){/* ไม่รองรับ ?action=sheets — ข้ามได้ */}
+
+    if(sheetNames&&sheetNames.length>0){
+      populateSheetDropdown(sheetNames,currentSheet);
+    }
+
+    // ── Step 2: ดึงข้อมูลจาก Sheet ที่เลือก ──────────────────────
+    const sheetParam=sel.value||'';
+    showGsheetStatus('⏳ กำลังดึงข้อมูลจาก Apps Script...','#f0f7ff','#185FA5');
+    let json=null;
+    try{
+      const fetchUrl=sheetParam ? rawUrl+'?sheet='+encodeURIComponent(sheetParam) : rawUrl;
+      const r=await fetch(fetchUrl);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      json=await r.json();
+    }catch(e){
+      showGsheetStatus('❌ ดึงไม่สำเร็จ — ตรวจสอบว่า Apps Script deploy เป็น "Anyone" และ Execute as "Me"','#fee2e2','#b91c1c');
+      return;
+    }
+
+    // ── ถ้า response มี sheetNames แนบมาด้วย ──────────────────────
+    if(json&&!Array.isArray(json)&&Array.isArray(json.sheets)){
+      populateSheetDropdown(json.sheets,sheetParam||json.sheets[0]);
+      json=json.data||json.rows||json;
+    }
+
+    if(!Array.isArray(json)||json.length===0){
+      showGsheetStatus('❌ ข้อมูลจาก Apps Script ต้องเป็น JSON array — ตรวจสอบ script','#fee2e2','#b91c1c');
+      return;
+    }
+    // รองรับทั้ง array of objects และ array of arrays (แถวแรก=header)
+    let normalized=json;
+    if(Array.isArray(json[0])){
+      const headers=json[0].map(h=>String(h).trim());
+      normalized=json.slice(1)
+        .filter(r=>Array.isArray(r)&&r.some(c=>c!==''&&c!==null&&c!==undefined))
+        .map(r=>{
+          const obj={};
+          headers.forEach((h,i)=>{obj[h]=r[i]===undefined?'':r[i];});
+          return obj;
+        });
+    }
+    if(!normalized.length){
+      showGsheetStatus('❌ ไม่พบข้อมูลหลัง parse — ตรวจสอบข้อมูลใน Sheet','#fee2e2','#b91c1c');
+      return;
+    }
+    showGsheetStatus('✅ เชื่อมต่อสำเร็จ — พบ '+normalized.length+' แถว','#f0fdf4','#15803d');
+
+    // ตรวจสอบ mode ที่ผู้ใช้เลือก
+    const selectedMode=(document.querySelector('input[name="gsheetMode"]:checked')||{}).value||'auto';
+    if(selectedMode==='emp'){parseEmpOnly(normalized);return;}
+    if(selectedMode==='att'){parseDateName(normalized);return;}
+    // auto-detect
+    const keys=normalized.length>0?Object.keys(normalized[0]).map(k=>String(k).toLowerCase().trim()):[];
+    const hasDateCol=keys.some(k=>k==='วันที่'||k==='date'||k==='day'||k==='วัน');
+    const hasGroupCol=keys.some(k=>k==='กลุ่ม'||k==='group'||k==='แผนก'||k==='ทีม');
+    const hasWageCol=keys.some(k=>k.includes('ค่าแรง')||k==='wage'||k==='salary'||k==='เงินเดือน');
+    if(!hasDateCol&&(hasGroupCol||hasWageCol)){parseEmpOnly(normalized);}
+    else{parseDateName(normalized);}
+
+  }catch(e){
+    showGsheetStatus('❌ เกิดข้อผิดพลาดที่ไม่คาดคิด — ลองอีกครั้ง','#fee2e2','#b91c1c');
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML='<i class="ti ti-refresh"></i> ดึงข้อมูล';
+  }
+}
+
+
+function extractSheetId(url){
+  const m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  return m?m[1]:null;
+}
+
+function getGsheetCsvUrl(sheetId,sheetName){
+  let url='https://docs.google.com/spreadsheets/d/'+sheetId+'/export?format=csv';
+  if(sheetName&&sheetName.trim()){
+    url+='&sheet='+encodeURIComponent(sheetName.trim());
+  }
+  return url;
+}
+
+function isAppsScriptUrl(url){
+  return url.includes('script.google.com/macros/s/');
+}
+
+
+
+function showGsheetStatus(msg,bg,color){
+  const el=document.getElementById('gsheetStatus');
+  el.style.display='block';
+  el.style.background=bg;
+  el.style.color=color;
+  el.style.border=`0.5px solid ${color}40`;
+  el.textContent=msg;
+}
+
+function parseCSVText(text){
+  // Handle \r\n and \r line endings
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  return lines.map(line=>{
+    const cells=[];
+    let cur='',inQuote=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){
+        if(inQuote&&line[i+1]==='"'){cur+='"';i++;}
+        else inQuote=!inQuote;
+      }else if(c===','&&!inQuote){
+        cells.push(cur.trim());cur='';
+      }else{cur+=c;}
+    }
+    cells.push(cur.trim());
+    return cells;
+  }).filter(r=>r.length>0&&r.some(c=>c!==''));
+}
+
+// Add spin animation for loader
+const spinStyle=document.createElement('style');
+spinStyle.textContent='@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+document.head.appendChild(spinStyle);
+
+function removeNewEmpRow(btn){
+  const tr=btn.closest('tr');
+  tr.style.opacity='0.4';
+  tr.style.textDecoration='line-through';
+  tr.style.pointerEvents='none';
+  tr.dataset.removed='1';
+  // disable inputs so they're excluded
+  tr.querySelectorAll('select,input').forEach(el=>el.disabled=true);
+  btn.style.display='none';
+}
+
+function confirmDateNameImport(){
+  // รวบรวมชื่อที่ถูกลบออกจากตาราง
+  const removedNames=new Set();
+  document.querySelectorAll('tr[data-removed="1"]').forEach(tr=>{
+    const n=tr.dataset.newname;if(n)removedNames.add(n);
+  });
+
+  // อ่านข้อมูลพนักงานใหม่จากฟอร์มที่แก้ไข
+  const newEmpData={};
+  document.querySelectorAll('.new-emp-grp:not(:disabled)').forEach(el=>{
+    const n=el.dataset.name;
+    if(!newEmpData[n])newEmpData[n]={};
+    newEmpData[n].group=el.value;
+  });
+  document.querySelectorAll('.new-emp-wage:not(:disabled)').forEach(el=>{
+    const n=el.dataset.name;
+    if(!newEmpData[n])newEmpData[n]={};
+    newEmpData[n].wage=Number(el.value)||400;
+  });
+
+  let empAdded=0,attSet=0,attSkip=0;
+  importRows.forEach(r=>{
+    const name=String(r.name).trim();
+    const day=parseInt(r.day);
+    if(!name||isNaN(day)||day<1||day>31)return;
+    // เพิ่มพนักงานใหม่ถ้าไม่มีในระบบ และไม่ถูกลบออก
+    let emp=employees.find(e=>e.name===name);
+    if(!emp){
+      if(removedNames.has(name)){attSkip++;return;} // ข้ามพนักงานที่ถูกลบ
+      const d=newEmpData[name]||{};
+      const wage=d.wage||400;
+      const gid=d.group||groups[0]?.id||'g1';
+      emp={id:'e'+Date.now()+Math.random(),name,group:gid,wage,otRate:wage/8*1.5};
+      employees.push(emp);empAdded++;
+      initAtt();
+    }
+    const k=aKey(emp.id,day);
+    if(!att[k])att[k]={mul:'',ot:''};
+    if(att[k].mul===''||att[k].mul===0)att[k].mul=1;
+    if(r.ot>0)att[k].ot=r.ot;
+    // บันทึกสถานที่ถ้ามี
+    if(r.siteName){
+      let siteObj=sites.find(s=>s.name===r.siteName);
+      if(!siteObj){siteObj={id:'s'+Date.now()+Math.random(),name:r.siteName};sites.push(siteObj);}
+      att[k].site=siteObj.id;
+    }
+    attSet++;
+  });
+  closeM('importModal');syncSels();render();saveData();
+  alert(`นำเข้าสำเร็จ!\n✅ บันทึกการเข้างาน: ${attSet} รายการ\n👤 เพิ่มพนักงานใหม่: ${empAdded} คน${attSkip?`\n⏭ ข้ามพนักงานที่ไม่นำเข้า: ${attSkip} รายการ`:''}`);
+}
+
+function parseEmpOnly(json){
+  importMode='emp';
+  const mapKey={
+    'ชื่อ':'name','ชื่อ-นามสกุล':'name','name':'name','รายชื่อ':'name','ชื่อพนักงาน':'name',
+    'กลุ่ม':'group','แผนก':'group','group':'group','ทีม':'group','team':'group','กลุ่ม/แผนก':'group',
+    'ค่าแรง/วัน':'wage','ค่าแรง':'wage','wage':'wage','เงินเดือน':'wage','salary':'wage','ค่าจ้าง':'wage',
+    'อัตราot/ชม.':'otRate','อัตราโอที':'otRate','otrate':'otRate','ot/ชม.':'otRate',
+  };
+  importRows=json.map(row=>{
+    const r={};
+    const allKeys=Object.keys(row);
+    Object.keys(row).forEach(k=>{
+      const mapped=mapKey[k]||mapKey[k.toLowerCase().trim()];
+      if(mapped)r[mapped]=row[k];
+    });
+    // Fallback: ถ้าไม่ match header เลย ลองใช้ตำแหน่งคอลัมน์ A=ชื่อ B=กลุ่ม C=ค่าแรง
+    if(!r.name&&allKeys[0])r.name=String(row[allKeys[0]]).trim();
+    if(!r.group&&allKeys[1])r.group=String(row[allKeys[1]]).trim();
+    if(!r.wage&&allKeys[2]){const w=Number(row[allKeys[2]]);if(!isNaN(w)&&w>0)r.wage=w;}
+    return r;
+  }).filter(r=>r.name&&String(r.name).trim()&&r.name!=='รายชื่อ'&&r.name!=='ชื่อ'&&r.name!=='name');
+
+  if(!importRows.length){
+    showImportError('ไม่พบข้อมูล กรุณาตรวจสอบหัวคอลัมน์');return;
+  }
+  const grpSummary={};
+  importRows.forEach(r=>{const g=r.group||'(ไม่มีกลุ่ม)';grpSummary[g]=(grpSummary[g]||0)+1;});
+  const grpCount=Object.keys(grpSummary).length;
+  // ตรวจว่ากลุ่มไหนใหม่ (ยังไม่มีในระบบ)
+  const newGroups=Object.keys(grpSummary).filter(g=>g!=='(ไม่มีกลุ่ม)'&&!groups.find(x=>x.name===g));
+  const grpBadges=Object.entries(grpSummary).map(([g,c])=>{
+    const isNew=newGroups.includes(g);
+    return`<span style="background:${isNew?'#FFF7ED':'#E6F1FB'};color:${isNew?'#92400E':'#0C447C'};padding:2px 7px;border-radius:10px;font-size:11px;margin:2px;display:inline-block;border:0.5px solid ${isNew?'#FCD34D':'#93C5FD'}">${g} (${c} คน)${isNew?' ✨ใหม่':''}</span>`;
+  }).join('');
+  const newGrpNote=newGroups.length?`<div style="margin-top:4px;font-size:11px;color:#92400E;background:#FFFBEB;padding:4px 8px;border-radius:4px;border:0.5px solid #FCD34D">✨ สร้างกลุ่มใหม่อัตโนมัติ ${newGroups.length} กลุ่ม: ${newGroups.join(', ')}</div>`:'';
+  const preview=`
+    <div style="font-size:12px;font-weight:600;padding:8px 0 4px;color:var(--green)">✅ พบพนักงาน ${importRows.length} คน · ${grpCount} กลุ่ม</div>
+    <div style="margin-bottom:4px;line-height:1.8">${grpBadges}</div>
+    ${newGrpNote}
+    <div class="import-preview" style="margin-top:6px">
+      <table><thead><tr><th>ชื่อ</th><th>กลุ่ม</th><th>฿/วัน</th></tr></thead>
+      <tbody>${importRows.slice(0,10).map(r=>`<tr>
+        <td>${r.name||'-'}</td><td>${r.group||'-'}</td><td>${r.wage||400}</td>
+      </tr>`).join('')}
+      ${importRows.length>10?`<tr><td colspan="3" style="text-align:center;color:var(--text3)">...และอีก ${importRows.length-10} รายการ</td></tr>`:''}
+      </tbody></table>
+    </div>`;
+  document.getElementById('importPreview').innerHTML=preview;
+  document.getElementById('importConfirmBtn').style.display='inline-flex';
+}
+
+// ── Mode 2: Import Template (พนักงาน + การเข้างาน) ───────────
+function parseAttendanceImport(empJson,attJson){
+  importMode='att';
+
+  // Map คอลัมน์การเข้างาน
+  const attMapKey={
+    'วันที่':'day','date':'day','day':'day',
+    'ชื่อพนักงาน':'name','ชื่อ':'name','name':'name',
+    'ชื่อพนักงาน  ▼  (dropdown)':'name',
+    'ตัวคูณ (×)':'mul','ตัวคูณ':'mul','mul':'mul','×':'mul',
+    'ot (ชั่วโมง)':'ot','ot':'ot','otชม.':'ot','โอที':'ot','ot(ชม.)':'ot','ot ชม':'ot','ot ชั่วโมง':'ot','overtime':'ot',
+  };
+
+  // Helper: แปลงค่าวันที่ให้เป็นเฉพาะตัวเลขวัน (1-31)
+  function parseDayOnly(val){
+    if(val===undefined||val===null||val==='')return '';
+    // ถ้าเป็น Excel serial number (ตัวเลข)
+    if(typeof val==='number'){
+      // Excel serial: วันที่ 1 Jan 1900 = 1
+      if(val>31){
+        // แปลง serial เป็น JS Date
+        const d=new Date(Math.round((val-25569)*86400*1000));
+        return d.getUTCDate();
+      }
+      return Math.round(val); // ถ้า<=31 ถือเป็นวันตรงๆ
+    }
+    const s=String(val).trim();
+    // รูปแบบ dd/mm/yyyy หรือ dd-mm-yyyy หรือ yyyy-mm-dd
+    const m1=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(m1)return parseInt(m1[1],10);
+    const m2=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+    if(m2)return parseInt(m2[3],10);
+    // รูปแบบ "15 มกราคม 2568" หรือ "15 Jan 2025"
+    const m3=s.match(/^(\d{1,2})\s/);
+    if(m3)return parseInt(m3[1],10);
+    // ลองเป็นตัวเลขล้วน
+    const n=parseInt(s,10);
+    if(!isNaN(n)&&n>=1&&n<=31)return n;
+    return '';
+  }
+
+  const attRows=attJson.map(row=>{
+    const r={};
+    Object.keys(row).forEach(k=>{
+      const key=k.toLowerCase().trim().replace(/\s+/g,' ');
+      const mapped=attMapKey[k]||attMapKey[key];
+      if(mapped)r[mapped]=row[k];
+    });
+    // แปลงวันที่ให้เป็นเฉพาะตัวเลขวัน
+    if(r.day!==undefined&&r.day!=='')r.day=parseDayOnly(r.day);
+    return r;
+  }).filter(r=>r.name&&String(r.name).trim()&&r.day!==''&&r.day!==undefined);
+
+  // Map คอลัมน์พนักงาน (ถ้ามี)
+  const empMapKey={
+    'ชื่อ-นามสกุล':'name','ชื่อ':'name','name':'name',
+    'กลุ่ม/แผนก':'group','กลุ่ม':'group','group':'group',
+    'ค่าแรง/วัน (฿)':'wage','ค่าแรง/วัน':'wage','wage':'wage',
+    'ot/ชม. (฿)':'otRate','otrate':'otRate','อัตราot/ชม.':'otRate'
+  };
+  const empRows=empJson.map(row=>{
+    const r={};
+    Object.keys(row).forEach(k=>{
+      const mapped=empMapKey[k]||empMapKey[k.toLowerCase().trim()];
+      if(mapped)r[mapped]=row[k];
+    });
+    return r;
+  }).filter(r=>r.name&&String(r.name).trim());
+
+  importRows={emp:empRows,att:attRows};
+
+  if(!attRows.length){
+    showImportError('ไม่พบข้อมูลการเข้างาน กรุณาตรวจสอบชีท "บันทึกการเข้างาน"');return;
+  }
+
+  // ตรวจชื่อที่ไม่ตรงกับในระบบ
+  const empNamesInSystem=new Set(employees.map(e=>e.name.trim()));
+  const empNamesInFile=new Set(attRows.map(r=>String(r.name).trim()));
+  const notFound=[...empNamesInFile].filter(n=>!empNamesInSystem.has(n)&&n);
+  const matched=[...empNamesInFile].filter(n=>empNamesInSystem.has(n));
+
+  let warnHtml='';
+  if(notFound.length){
+    const grpOptions=groups.map(g=>`<option value="${g.id}">${g.name}</option>`).join('');
+    const newEmpRows=notFound.map(n=>`
+      <tr style="background:#FFFBEB" data-newname="${n.replace(/"/g,'&quot;')}">
+        <td style="padding:4px 6px;font-weight:600">${n}</td>
+        <td style="padding:4px 6px"><select class="new-emp-grp" data-name="${n}" style="width:100%;height:28px;font-size:11px;border:0.5px solid #cbd5e1;border-radius:4px;font-family:inherit">${grpOptions}</select></td>
+        <td style="padding:4px 6px"><input class="new-emp-wage" data-name="${n}" type="number" value="400" min="0" style="width:80px;height:28px;font-size:11px;border:0.5px solid #cbd5e1;border-radius:4px;text-align:center;font-family:inherit"/></td>
+        <td style="padding:4px 2px;text-align:center"><button onclick="removeNewEmpRow(this)" title="ไม่นำเข้าพนักงานคนนี้" style="border:none;background:transparent;cursor:pointer;color:#ef4444;font-size:15px;line-height:1;padding:2px 4px;border-radius:4px" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">✕</button></td>
+      </tr>`).join('');
+    warnHtml=`<div style="margin-top:10px;padding:10px;background:#FFF7ED;border:0.5px solid #FCD34D;border-radius:6px;font-size:11px">
+      <div style="font-weight:700;color:#92400E;margin-bottom:6px">👤 จะเพิ่มพนักงานใหม่ ${notFound.length} คนอัตโนมัติ — กรุณาตรวจสอบข้อมูลก่อนนำเข้า:</div>
+      <div style="font-size:10px;color:#92400E;margin-bottom:6px;opacity:.8">กด ✕ เพื่อข้ามพนักงานที่ไม่ต้องการเพิ่ม</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#FEF3C7">
+          <th style="padding:4px 6px;text-align:left">ชื่อพนักงาน</th>
+          <th style="padding:4px 6px;text-align:left">กลุ่ม/แผนก</th>
+          <th style="padding:4px 6px;text-align:left">ค่าแรง/วัน (฿)</th>
+          <th style="padding:4px 2px;width:28px"></th>
+        </tr></thead>
+        <tbody>${newEmpRows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  const preview=`
+    <div style="font-size:12px;font-weight:600;padding:8px 0 4px;color:var(--green)">
+      ✅ พบข้อมูล ${attRows.length} รายการ · วันที่ + ชื่อพนักงาน
+      ${notFound.length?`· <span style="color:#D97706">${notFound.length} ชื่อใหม่</span>`:''}
+    </div>
+    <div class="import-preview">
+      <table><thead><tr><th>วันที่</th><th>ชื่อ</th><th>×</th><th>OT</th><th>สถานะ</th></tr></thead>
+      <tbody>${attRows.map(r=>{
+        const nm=String(r.name).trim();
+        const found=empNamesInSystem.has(nm);
+        return`<tr>
+          <td style="text-align:center;color:#185FA5;font-weight:600">${r.day}</td>
+          <td>${nm}</td>
+          <td style="text-align:center;color:#0F6E56">${r.mul||'-'}</td>
+          <td style="text-align:center;color:#185FA5">${r.ot||'-'}</td>
+          <td style="text-align:center">${found?'<span style="color:#0F6E56">✓</span>':'<span style="color:#D97706">ใหม่</span>'}</td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>
+    ${warnHtml}`;
+  document.getElementById('importPreview').innerHTML=preview;
+  document.getElementById('importConfirmBtn').style.display='inline-flex';
+  document.getElementById('importConfirmBtn').textContent='';
+  document.getElementById('importConfirmBtn').innerHTML='<i class="ti ti-check"></i> นำเข้าการเข้างาน';
+}
+
+function showImportError(msg){
+  document.getElementById('importPreview').innerHTML=`<div style="padding:12px;color:var(--red);font-size:12px">❌ ${msg}</div>`;
+  document.getElementById('importConfirmBtn').style.display='none';
+}
+
+function confirmImport(){
+  if(importMode==='att'){
+    confirmAttImport();
+  }else if(importMode==='payroll'){
+    confirmPayrollImport();
+  }else if(importMode==='datename'){
+    confirmDateNameImport();
+  }else{
+    confirmEmpImport();
+  }
+}
+
+function confirmEmpImport(){
+  const grpSummary={};
+  importRows.forEach(r=>{const g=r.group||'(ไม่มีกลุ่ม)';grpSummary[g]=(grpSummary[g]||0)+1;});
+  const grpCount=Object.keys(grpSummary).length;
+  if(!confirm(`นำเข้าพนักงาน ${importRows.length} คน · ${grpCount} กลุ่ม\n\nกด OK = เพิ่มพนักงานใหม่ (ไม่ลบรายการเดิม)`))return;
+  let added=0,skipped=0;
+  importRows.forEach(r=>{
+    const name=String(r.name).trim();if(!name)return;
+    let gid=groups[0]?.id||'g1';
+    if(r.group){
+      const gname=String(r.group).trim();
+      let g=groups.find(x=>x.name===gname);
+      if(!g){g={id:'g'+Date.now()+Math.random(),name:gname};groups.push(g);}
+      gid=g.id;
+    }
+    if(employees.some(e=>e.name===name)){skipped++;return;}
+    const wage=Number(r.wage)||400;
+    const otRate=Number(r.otRate)||(wage/8*1.5); // คำนวณ OT rate จากค่าแรงถ้าไม่ได้ระบุ
+    employees.push({id:'e'+Date.now()+Math.random(),name,group:gid,wage,otRate});
+    added++;
+  });
+  initAtt();closeM('importModal');syncSels();render();saveData();
+  alert(`✅ นำเข้าพนักงานสำเร็จ!\n👤 เพิ่มใหม่: ${added} คน · ${grpCount} กลุ่ม${skipped?`\n⚠️ ซ้ำ ข้าม: ${skipped} คน`:''}`);;
+}
+
+function confirmAttImport(){
+  const{emp:empRows,att:attRows}=importRows;
+
+  // รวบรวมชื่อที่ถูกลบออกจากตาราง
+  const removedNames=new Set();
+  document.querySelectorAll('tr[data-removed="1"]').forEach(tr=>{
+    const n=tr.dataset.newname;if(n)removedNames.add(n);
+  });
+
+  // อ่านข้อมูลพนักงานใหม่จากฟอร์มที่แก้ไข
+  const newEmpData={};
+  document.querySelectorAll('.new-emp-grp:not(:disabled)').forEach(el=>{
+    const n=el.dataset.name;if(!newEmpData[n])newEmpData[n]={};newEmpData[n].group=el.value;
+  });
+  document.querySelectorAll('.new-emp-wage:not(:disabled)').forEach(el=>{
+    const n=el.dataset.name;if(!newEmpData[n])newEmpData[n]={};newEmpData[n].wage=Number(el.value)||400;
+  });
+
+  // 1. เพิ่มพนักงานที่ยังไม่มีในระบบ (และไม่ถูกลบออก)
+  const allNames=new Set([
+    ...empRows.map(r=>String(r.name||'').trim()),
+    ...attRows.map(r=>String(r.name||'').trim())
+  ]);
+  let empAdded=0;
+  allNames.forEach(name=>{
+    if(!name)return;
+    if(employees.some(e=>e.name===name))return;
+    if(removedNames.has(name))return; // ข้ามพนักงานที่ถูกลบ
+    const empData=empRows.find(r=>String(r.name).trim()===name);
+    const formData=newEmpData[name]||{};
+    const wage=Number(formData.wage)||Number(empData?.wage)||400;
+    let gid=formData.group||groups[0]?.id||'g1';
+    if(!formData.group&&empData?.group){
+      const gname=String(empData.group).trim();
+      let g=groups.find(x=>x.name===gname);
+      if(!g){g={id:'g'+Date.now()+Math.random(),name:gname};groups.push(g);}
+      gid=g.id;
+    }
+    employees.push({id:'e'+Date.now()+Math.random(),name,group:gid,wage,otRate:wage/8*1.5});
+    empAdded++;
+  });
+  initAtt();
+
+  // 2. บันทึกการเข้างาน — รองรับทั้งรูปแบบ "mul/ot" คอลัมน์เดียว และ mul, ot แยกคอลัมน์
+  let attSet=0,attSkip=0;
+  attRows.forEach(r=>{
+    const name=String(r.name).trim();
+    const day=parseInt(r.day);
+    if(!name||isNaN(day)||day<1||day>31)return;
+    const emp=employees.find(e=>e.name===name);
+    if(!emp){attSkip++;return;}
+    const k=aKey(emp.id,day);
+    if(!att[k])att[k]={mul:'',ot:''};
+    // รองรับ combined format "mul/ot" เช่น "1/2", "1/", "/3"
+    if(r.combined!==undefined&&r.combined!==null&&r.combined!==''){
+      const parts=String(r.combined).split('/');
+      const m=parts[0]===undefined?'':parts[0].trim();
+      const o=parts[1]===undefined?'':parts[1].trim();
+      if(m!=='')att[k].mul=Number(m)||'';
+      if(o!=='')att[k].ot=Number(o)||'';
+    }else{
+      if(r.mul!==''&&r.mul!==undefined&&r.mul!==null)att[k].mul=Number(r.mul)||'';
+      if(r.ot!==''&&r.ot!==undefined&&r.ot!==null)att[k].ot=Number(r.ot)||'';
+    }
+    attSet++;
+  });
+
+  closeM('importModal');syncSels();render();saveData();
+  const skippedMsg=removedNames.size?`\n⏭ ข้ามพนักงานที่ไม่นำเข้า: ${removedNames.size} คน`:'';
+  const notFoundMsg=(attSkip-[...removedNames].reduce((c,n)=>c+attRows.filter(r=>String(r.name).trim()===n).length,0))>0?`\n⚠️ ข้ามไม่พบชื่อ: ${attSkip} รายการ`:'';
+  alert(`นำเข้าสำเร็จ!\n✅ บันทึกการเข้างาน: ${attSet} รายการ\n👤 เพิ่มพนักงานใหม่: ${empAdded} คน${skippedMsg}`);
+}
+
+function downloadTemplate(){
+  alert('กรุณาดาวน์โหลด Template จากไฟล์ payroll_attendance_template.xlsx ที่ได้รับไว้แล้ว\n\nTemplate มี Dropdown ให้เลือกชื่อพนักงานอัตโนมัติ');
+}
+
+// ─── Finance Modal ────────────────────────────────────────────
+function openFinance(eid){
+  const emp=employees.find(e=>e.id===eid);if(!emp)return;
+  document.getElementById('finEmpId').value=eid;
+  document.getElementById('finEmpName').textContent=emp.name;
+  document.getElementById('finMonLabel').textContent=THAI_M[cM]+' '+(cY+543);
+  finTab(1);
+  renderFinModal(eid);
+  document.getElementById('financeModal').classList.add('open');
+}
+function finTab(n){
+  [1,2,3].forEach(i=>{
+    const btn=document.getElementById('finTabBtn'+i);
+    const panel=document.getElementById('finPanel'+i);
+    const active=i===n;
+    btn.style.background=active?(i===1?'var(--red)':i===2?'var(--green)':'var(--primary)'):'var(--card)';
+    btn.style.color=active?'#fff':'var(--text2)';
+    btn.style.fontWeight=active?'600':'500';
+    panel.style.display=active?'block':'none';
+  });
+  if(n===3){const eid=document.getElementById('finEmpId').value;if(eid)updateFinPreview(eid);}
+}
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function renderFinModal(eid){
+  const f=getFin(eid);
+  document.getElementById('finAdvList').innerHTML=f.advances.length?f.advances.map((a,i)=>finItemRow('Adv',i,a)).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0">— ยังไม่มีรายการ —</div>';
+  document.getElementById('finDedList').innerHTML=f.deductions.length?f.deductions.map((a,i)=>finItemRow('Ded',i,a)).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0">— ยังไม่มีรายการ —</div>';
+  document.getElementById('finReimList').innerHTML=f.reimbursements.length?f.reimbursements.map((a,i)=>finItemRow('Reim',i,a)).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0">— ยังไม่มีรายการ —</div>';
+  document.getElementById('finSsRate').value=f.ssRate||0;
+  document.getElementById('finSsFixed').value=f.ssFixed||0;
+  document.getElementById('finDebt').value=f.debtToCompany||0;
+  document.getElementById('finCompOwes').value=f.companyOwes||0;
+  document.getElementById('finCarRate').value=f.carRate||0;
+  updateFinPreview(eid);
+}
+function finItemRow(type,i,a){
+  return`<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">
+    <input type="text" value="${escH(a.label)}" placeholder="รายละเอียด" oninput="finUpd('${type}',${i},'label',this.value)" style="flex:1;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);padding:0 8px;font-family:inherit"/>
+    <input type="number" value="${a.amount||0}" min="0" oninput="finUpd('${type}',${i},'amount',this.value)" style="width:90px;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);text-align:right;padding:0 6px;font-family:inherit"/>
+    <span style="font-size:11px;color:var(--text3)">฿</span>
+    <button onclick="finDel('${type}',${i})" style="height:26px;width:26px;border:0.5px solid var(--red-border);border-radius:var(--rad);background:transparent;color:var(--red);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:inherit">×</button>
+  </div>`;
+}
+function finGetEid(){return document.getElementById('finEmpId').value;}
+function finUpd(type,i,k,v){
+  const eid=finGetEid();const f=getFin(eid);
+  const arr=type==='Adv'?f.advances:type==='Ded'?f.deductions:f.reimbursements;
+  arr[i][k]=k==='amount'?Number(v)||0:v;
+  saveData();updateFinPreview(eid);
+}
+function finDel(type,i){
+  const eid=finGetEid();const f=getFin(eid);
+  const arr=type==='Adv'?f.advances:type==='Ded'?f.deductions:f.reimbursements;
+  arr.splice(i,1);renderFinModal(eid);saveData();
+}
+function finAdd(type){
+  const eid=finGetEid();const f=getFin(eid);
+  if(type==='Adv')f.advances.push({id:'a'+Date.now(),label:'เบิกล่วงหน้า',amount:0});
+  else if(type==='Ded')f.deductions.push({id:'d'+Date.now(),label:'หักค่า...',amount:0});
+  else f.reimbursements.push({id:'r'+Date.now(),label:'ชื่อบิล',amount:0});
+  renderFinModal(eid);saveData();
+}
+function finSaveFixed(){
+  const eid=finGetEid();const f=getFin(eid);
+  f.ssRate=Number(document.getElementById('finSsRate').value)||0;
+  f.ssFixed=Number(document.getElementById('finSsFixed').value)||0;
+  f.debtToCompany=Number(document.getElementById('finDebt').value)||0;
+  f.companyOwes=Number(document.getElementById('finCompOwes').value)||0;
+  f.carRate=Number(document.getElementById('finCarRate').value)||0;
+  saveData();updateFinPreview(eid);
+}
+function updateFinPreview(eid){
+  const emp=employees.find(e=>e.id===eid);if(!emp)return;
+  const c=calcFinancials(emp);
+  const el=document.getElementById('finPreview');if(!el)return;
+  const row=(label,val,color,sign)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">${label}</span><span style="color:${color};font-weight:600">${sign}${val.toLocaleString()} ฿</span></div>`;
+  el.innerHTML=
+    row('ค่าแรง + OT',c.pay,'#0F6E56','')+
+    (c.carAmt>0?row('+ ค่ารถ',c.carAmt,'#0F6E56','+'): '')+
+    (c.totalReim>0?row('+ เบิกคืน (บิล)',c.totalReim,'#0F6E56','+'):'')+
+    (c.compOwes>0?row('+ บริษัทค้างเงิน',c.compOwes,'#0F6E56','+'):'')+
+    (c.totalAdv>0?row('− เบิกล่วงหน้า',c.totalAdv,'#A32D2D','-'):'')+
+    (c.totalDed>0?row('− หักค่าอื่นๆ',c.totalDed,'#A32D2D','-'):'')+
+    (c.ssAmount>0?row('− ประกันสังคม',c.ssAmount,'#A32D2D','-'):'')+
+    (c.totalDebt>0?row('− ค้างเงินบริษัท',c.totalDebt,'#A32D2D','-'):'')+
+    `<div style="display:flex;justify-content:space-between;font-size:14px;padding:6px 0 0;margin-top:4px;border-top:1.5px solid var(--border2);font-weight:700"><span>ยอดจ่ายสุทธิ</span><span style="color:${c.netPay>=0?'#27500A':'#A32D2D'}">${c.netPay.toLocaleString()} ฿</span></div>`;
+}
+
+// ─── Slip ─────────────────────────────────────────────────────
+function finSlipRow(sign,label,amount,color){
+  return`<tr><td style="padding:4px 10px;color:var(--text2);width:18px">${sign}</td><td style="padding:4px 4px">${label}</td><td style="padding:4px 10px;text-align:right;font-weight:600;color:${color}">${amount.toLocaleString()} ฿</td></tr>`;
+}
+function openSlip(eid){
+  const emp=employees.find(e=>e.id===eid);if(!emp)return;
+  const{workDays,dayPay,otH,otPay,otRate,pay}=calcEmp(emp);
+  const c=calcFinancials(emp);
+  const f=getFin(eid);
+  const g=groups.find(x=>x.id===emp.group);
+  const mLabel=`${THAI_M[cM]} ${cY+543}`;
+  const days=dim(cY,cM);
+  let dayRows='';
+  for(let d=1;d<=days;d++){
+    const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+    const mul=r.mul===''?0:Number(r.mul)||0;
+    const ot=Number(r.ot)||0;
+    if(mul>0||ot>0){
+      const dp=Math.round(emp.wage*mul);const op=Math.round(ot*otRate);
+      const dow=DOW[new Date(cY,cM,d).getDay()];
+      const siteObj=r.site?sites.find(s=>s.id===r.site):null;
+      dayRows+=`<tr><td style="text-align:center;color:var(--text2)">${d} ${dow}</td><td style="text-align:center">${mul>0?`×${mul}`:'-'}</td><td style="text-align:right;color:#0F6E56">${mul>0?dp.toLocaleString():'-'}</td><td style="text-align:center;color:#185FA5">${ot>0?ot:'—'}</td><td style="text-align:right;color:#185FA5">${ot>0?op.toLocaleString():'—'}</td><td style="font-size:10px;color:#7c3aed;padding:3px 6px">${siteObj?siteObj.name:''}</td></tr>`;
+    }
+  }
+  const hasF=(c.totalAdv+c.totalDed+c.ssAmount+c.totalDebt+c.totalReim+c.compOwes+c.carAmt)>0;
+  let addRows='',dedRows='';
+  if(c.carAmt>0)addRows+=finSlipRow('+','ค่ารถ ('+f.carRate+'฿ × '+c.workDays+' วัน)',c.carAmt,'#0F6E56');
+  f.reimbursements.forEach(r=>{if(Number(r.amount||0)>0)addRows+=finSlipRow('+',r.label||'เบิกคืน',Number(r.amount),'#0F6E56');});
+  if(c.compOwes>0)addRows+=finSlipRow('+','บริษัทค้างเงิน',c.compOwes,'#0F6E56');
+  f.advances.forEach(a=>{if(Number(a.amount||0)>0)dedRows+=finSlipRow('−',a.label||'เบิกล่วงหน้า',Number(a.amount),'#A32D2D');});
+  f.deductions.forEach(d=>{if(Number(d.amount||0)>0)dedRows+=finSlipRow('−',d.label||'หักค่า',Number(d.amount),'#A32D2D');});
+  if(c.ssAmount>0)dedRows+=finSlipRow('−',f.ssFixed>0?`ประกันสังคม (${f.ssFixed.toLocaleString()} ฿)`:`ประกันสังคม (${f.ssRate}%)`,c.ssAmount,'#A32D2D');
+  if(c.totalDebt>0)dedRows+=finSlipRow('−','ค้างเงินบริษัท',c.totalDebt,'#A32D2D');
+  // Build detailed summary rows for the green footer section
+  let summaryDetailRows = '';
+  const sumRow=(label,val,color,sign)=>`<div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:0.5px solid rgba(0,0,0,0.06)"><span style="color:#4a7a5a">${label}</span><span style="color:${color};font-weight:600">${sign}${val.toLocaleString()} ฿</span></div>`;
+  summaryDetailRows += sumRow('ค่าแรง ('+workDays+' วัน)', dayPay, '#27500A', '');
+  if(otH>0) summaryDetailRows += sumRow('ค่า OT ('+otH+' ชม.)', otPay, '#27500A', '+');
+  if(c.carAmt>0) summaryDetailRows += sumRow('ค่ารถ ('+f.carRate+'฿ × '+c.workDays+' วัน)', c.carAmt, '#27500A', '+');
+  f.reimbursements.forEach(r=>{if(Number(r.amount||0)>0) summaryDetailRows += sumRow(r.label||'เบิกคืนบิล', Number(r.amount), '#27500A', '+');});
+  if(c.compOwes>0) summaryDetailRows += sumRow('บริษัทค้างเงิน', c.compOwes, '#27500A', '+');
+  f.advances.forEach(a=>{if(Number(a.amount||0)>0) summaryDetailRows += sumRow(a.label||'เบิกล่วงหน้า', Number(a.amount), '#A32D2D', '−');});
+  f.deductions.forEach(d=>{if(Number(d.amount||0)>0) summaryDetailRows += sumRow(d.label||'หักค่า', Number(d.amount), '#A32D2D', '−');});
+  if(c.ssAmount>0) summaryDetailRows += sumRow(f.ssFixed>0?`ประกันสังคม (${f.ssFixed.toLocaleString()} ฿)`:`ประกันสังคม (${f.ssRate}%)`, c.ssAmount, '#A32D2D', '−');
+  if(c.totalDebt>0) summaryDetailRows += sumRow('ค้างเงินบริษัท', c.totalDebt, '#A32D2D', '−');
+
+  const finSection=hasF?`<div style="margin-top:10px;border:0.5px solid var(--border);border-radius:var(--rad);overflow:hidden">
+    <div style="background:#f8fafc;padding:5px 10px;font-size:11px;font-weight:700;color:var(--text2)">รายการปรับยอด</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tbody>
+        <tr style="background:#f0fdf4"><td colspan="3" style="padding:3px 10px;font-size:10px;font-weight:700;color:#0F6E56">รายการเพิ่ม</td></tr>
+        ${addRows||'<tr><td colspan="3" style="padding:3px 10px;font-size:11px;color:var(--text3)">—</td></tr>'}
+        <tr style="background:#fff5f5"><td colspan="3" style="padding:3px 10px;font-size:10px;font-weight:700;color:#A32D2D">รายการหัก</td></tr>
+        ${dedRows||'<tr><td colspan="3" style="padding:3px 10px;font-size:11px;color:var(--text3)">—</td></tr>'}
+      </tbody>
+    </table>
+  </div>`:'';
+  const html=`<div style="border:0.5px solid var(--border);border-radius:var(--rad);padding:14px;background:#fafafa">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div><div style="font-size:16px;font-weight:700;color:var(--primary-dark)">${emp.name}</div>
+      <div style="font-size:12px;color:var(--text2)">${g?g.name:''} · ${mLabel}</div></div>
+      <div style="text-align:right;font-size:11px;color:var(--text3)">ค่าแรง/วัน: <b>${emp.wage.toLocaleString()} ฿</b><br>OT/ชม.: <b>${otRate.toFixed(2)} ฿</b></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">
+      <thead><tr style="background:#f8fafc">
+        <th style="padding:5px 8px;border:0.5px solid var(--border);text-align:center">วัน</th>
+        <th style="padding:5px 8px;border:0.5px solid var(--border)">ตัวคูณ</th>
+        <th style="padding:5px 8px;border:0.5px solid var(--border);text-align:right">ค่าแรง ฿</th>
+        <th style="padding:5px 8px;border:0.5px solid var(--border)">OT ชม.</th>
+        <th style="padding:5px 8px;border:0.5px solid var(--border);text-align:right">ค่า OT ฿</th>
+        <th style="padding:5px 8px;border:0.5px solid var(--border)">สถานที่</th>
+      </tr></thead>
+      <tbody>${dayRows||'<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--text3)">ไม่มีการทำงานในเดือนนี้</td></tr>'}</tbody>
+      <tfoot><tr style="background:#f8fafc;font-weight:600">
+        <td colspan="2" style="padding:5px 8px;border:0.5px solid var(--border)">รวมค่าแรง</td>
+        <td style="padding:5px 8px;border:0.5px solid var(--border);text-align:right;color:#0F6E56">${dayPay.toLocaleString()} ฿</td>
+        <td style="padding:5px 8px;border:0.5px solid var(--border);text-align:center;color:#185FA5">${otH}</td>
+        <td style="padding:5px 8px;border:0.5px solid var(--border);text-align:right;color:#185FA5">${otPay.toLocaleString()} ฿</td>
+        <td style="padding:5px 8px;border:0.5px solid var(--border)"></td>
+      </tr></tfoot>
+    </table>
+    ${finSection}
+    <div style="margin-top:10px;background:var(--green-light);border-radius:var(--rad);padding:12px 14px">
+      ${hasF
+        ? `<div style="font-size:11px;font-weight:700;color:#0F6E56;margin-bottom:6px;letter-spacing:0.2px">📋 สรุปรายการทั้งหมด</div>
+           ${summaryDetailRows}
+           <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--green-border);margin-top:8px;padding-top:8px">
+             <div style="font-size:13px;color:var(--green);font-weight:700">💰 ยอดจ่ายสุทธิ</div>
+             <div style="font-size:22px;font-weight:700;color:${c.netPay>=0?'#27500A':'#A32D2D'}">${c.netPay.toLocaleString()} ฿</div>
+           </div>`
+        : `<div style="display:flex;justify-content:space-between;align-items:center">
+             <div style="font-size:12px;color:var(--green);font-weight:500">รวมค่าแรง</div>
+             <div style="font-size:22px;font-weight:700;color:#27500A">${pay.toLocaleString()} ฿</div>
+           </div>
+           <div style="font-size:11px;color:var(--green)">วันทำงาน ${workDays} วัน · OT ${otH} ชม.</div>`
+      }
+    </div>
+  </div>`;
+  document.getElementById('slipContent').innerHTML=html;
+  document.getElementById('slipModal').classList.add('open');
+  window._slipPrint={emp,g,mLabel,workDays,dayPay,otH,otPay,pay,html,c,hasF};
+}
+
+function printSlip(){
+  if(!window._slipPrint)return;
+  const{emp,g,mLabel,workDays,dayPay,otH,otPay,pay,html}=window._slipPrint;
+  const printArea=document.getElementById('slip-print-area');
+  printArea.style.display='block';
+  printArea.innerHTML=`
+    <style>
+      body{font-family:'Sarabun',sans-serif;margin:0;padding:0}
+      @page{size:A5 landscape;margin:15mm}
+    </style>
+    <div style="padding:20px;font-family:sans-serif;max-width:600px;margin:0 auto">
+      <div style="text-align:center;font-size:18px;font-weight:700;margin-bottom:16px;color:#185FA5">
+        สลิปเงินเดือน · ${mLabel}
+      </div>
+      ${html}
+      <div style="margin-top:16px;font-size:11px;color:#888;text-align:center">
+        พิมพ์เมื่อ ${new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})}
+      </div>
+    </div>`;
+  window.print();
+  setTimeout(()=>{printArea.style.display='none';},500);
+}
+
+// ─── Init ────────────────────────────────────────────────────
+
+// ─── Bulk Delete ─────────────────────────────────────────────
+let bdCurrentTab = 1;
+let bdSelectedIds = new Set();
+
+function openBulkDelete(){
+  bdSelectedIds = new Set();
+  bdCurrentTab = 1;
+  bdSetTab(1);
+  document.getElementById('bdSearch').value = '';
+  document.getElementById('bdAllCount').textContent = employees.length;
+  bdRenderEmpList();
+  bdRenderGrpList();
+  document.getElementById('bulkDelModal').classList.add('open');
+}
+
+function bdSetTab(n){
+  bdCurrentTab = n;
+  [1,2,3].forEach(i=>{
+    const tab = document.getElementById('bdTab'+i);
+    const panel = document.getElementById('bdPanel'+i);
+    const active = i === n;
+    tab.style.background = active ? 'var(--primary)' : 'transparent';
+    tab.style.color = active ? '#fff' : 'var(--text2)';
+    tab.style.fontWeight = active ? '600' : '500';
+    panel.style.display = active ? (i===1?'block':'block') : 'none';
+  });
+  const labels = ['ลบที่เลือก','ลบกลุ่มที่เลือก','ลบพนักงานทั้งหมด'];
+  document.getElementById('bdConfirmLabel').textContent = labels[n-1];
+}
+
+function bdRenderEmpList(filter=''){
+  const list = document.getElementById('bdEmpList');
+  const fl = filter.toLowerCase();
+  let html = '';
+  groups.forEach(g=>{
+    const gEmps = employees.filter(e=>e.group===g.id && (!fl || e.name.toLowerCase().includes(fl)));
+    if(!gEmps.length) return;
+    html += `<div style="background:#f8fafc;padding:5px 10px;font-size:11px;font-weight:700;color:var(--primary-dark);border-bottom:0.5px solid var(--border)">${g.name}</div>`;
+    gEmps.forEach(emp=>{
+      const chk = bdSelectedIds.has(emp.id) ? 'checked' : '';
+      html += `<label style="display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:12px;transition:background .1s" onmouseover="this.style.background='#f4f8ff'" onmouseout="this.style.background=''">
+        <input type="checkbox" ${chk} onchange="bdToggle('${emp.id}',this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--red)"/>
+        <span style="flex:1">${emp.name}</span>
+        <span style="font-size:10px;color:var(--text3)">${emp.wage.toLocaleString()} ฿/วัน</span>
+      </label>`;
+    });
+  });
+  // ungrouped
+  const ungrouped = employees.filter(e=>!groups.find(g=>g.id===e.group) && (!fl || e.name.toLowerCase().includes(fl)));
+  if(ungrouped.length){
+    html += `<div style="background:#f8fafc;padding:5px 10px;font-size:11px;font-weight:700;color:var(--text2);border-bottom:0.5px solid var(--border)">ไม่มีกลุ่ม</div>`;
+    ungrouped.forEach(emp=>{
+      const chk = bdSelectedIds.has(emp.id) ? 'checked' : '';
+      html += `<label style="display:flex;align-items:center;gap:8px;padding:7px 12px;cursor:pointer;border-bottom:0.5px solid var(--border);font-size:12px" onmouseover="this.style.background='#f4f8ff'" onmouseout="this.style.background=''">
+        <input type="checkbox" ${chk} onchange="bdToggle('${emp.id}',this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--red)"/>
+        <span style="flex:1">${emp.name}</span>
+        <span style="font-size:10px;color:var(--text3)">${emp.wage.toLocaleString()} ฿/วัน</span>
+      </label>`;
+    });
+  }
+  if(!html) html = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">ไม่พบพนักงาน</div>';
+  list.innerHTML = html;
+  bdUpdateCount();
+}
+
+function bdRenderGrpList(){
+  const list = document.getElementById('bdGrpList');
+  list.innerHTML = groups.map(g=>{
+    const cnt = employees.filter(e=>e.group===g.id).length;
+    return `<label style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border:0.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--card)" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background=''">
+      <input type="checkbox" class="bd-grp-chk" data-gid="${g.id}" style="width:16px;height:16px;cursor:pointer;accent-color:var(--red)"/>
+      <span style="flex:1;font-weight:600">${g.name}</span>
+      <span style="font-size:11px;color:var(--text2)">${cnt} คน</span>
+    </label>`;
+  }).join('') || '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">ไม่มีกลุ่ม</div>';
+}
+
+function bdToggle(eid, checked){
+  if(checked) bdSelectedIds.add(eid); else bdSelectedIds.delete(eid);
+  bdUpdateCount();
+}
+
+function bdSelectAll(sel){
+  const fl = document.getElementById('bdSearch').value.toLowerCase();
+  employees.filter(e=>!fl||e.name.toLowerCase().includes(fl)).forEach(e=>{
+    if(sel) bdSelectedIds.add(e.id); else bdSelectedIds.delete(e.id);
+  });
+  bdRenderEmpList(fl);
+}
+
+function bdFilterList(){
+  const fl = document.getElementById('bdSearch').value;
+  bdRenderEmpList(fl);
+}
+
+function bdUpdateCount(){
+  document.getElementById('bdSelCount').textContent = `เลือก ${bdSelectedIds.size} คน`;
+}
+
+function bdDoDeleteIds(ids){
+  ids.forEach(eid=>{
+    employees = employees.filter(x=>x.id!==eid);
+    Object.keys(att).forEach(k=>{ if(k.startsWith(eid+'_')) delete att[k]; });
+  });
+  render(); syncSels(); saveData();
+}
+
+function bdConfirm(){
+  if(bdCurrentTab===1){
+    if(!bdSelectedIds.size){ alert('กรุณาเลือกพนักงานอย่างน้อย 1 คน'); return; }
+    const names = [...bdSelectedIds].map(id=>employees.find(e=>e.id===id)?.name).filter(Boolean);
+    const nameList = names.slice(0,10).join('\n') + (names.length>10 ? '\n...และอีก '+(names.length-10)+' คน' : '');
+    if(!confirm('ลบพนักงาน '+bdSelectedIds.size+' คน?\n\n'+nameList+'\n\nการกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    const delCount = bdSelectedIds.size;
+    bdDoDeleteIds([...bdSelectedIds]);
+    closeM('bulkDelModal');
+    alert('✅ ลบพนักงานสำเร็จ '+delCount+' คน');
+  } else if(bdCurrentTab===2){
+    const checkedGids = [...document.querySelectorAll('.bd-grp-chk:checked')].map(el=>el.dataset.gid);
+    if(!checkedGids.length){ alert('กรุณาเลือกกลุ่มอย่างน้อย 1 กลุ่ม'); return; }
+    const toDelete = employees.filter(e=>checkedGids.includes(e.group));
+    if(!toDelete.length){ alert('ไม่มีพนักงานในกลุ่มที่เลือก'); return; }
+    const grpNames = checkedGids.map(id=>groups.find(g=>g.id===id)?.name).filter(Boolean);
+    if(!confirm('ลบพนักงานทั้งหมดในกลุ่ม: '+grpNames.join(', ')+'\n\nรวม '+toDelete.length+' คน\n\nการกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    const delCount2 = toDelete.length;
+    bdDoDeleteIds(toDelete.map(e=>e.id));
+    closeM('bulkDelModal');
+    alert('✅ ลบพนักงาน '+delCount2+' คน จาก '+grpNames.length+' กลุ่มสำเร็จ');
+  } else if(bdCurrentTab===3){
+    if(!employees.length){ alert('ไม่มีพนักงานในระบบ'); return; }
+    if(!confirm('⚠️ ลบพนักงานทั้งหมด '+employees.length+' คน?\n\nข้อมูลการเข้างานทั้งหมดจะถูกลบด้วย\n\nการกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+    const cnt = employees.length;
+    employees = [];
+    att = {};
+    render(); syncSels(); saveData();
+    closeM('bulkDelModal');
+    alert('✅ ลบพนักงานทั้งหมด '+cnt+' คนสำเร็จ');
+  }
+}
+
+
+// ─── Print Report ─────────────────────────────────────────────
+function openPrintReport(){
+  // Render group checkboxes
+  const list = document.getElementById('prGrpList');
+  list.innerHTML = groups.map(g => {
+    const cnt = employees.filter(e=>e.group===g.id).length;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:0.5px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'\'">'+
+      '<input type="checkbox" class="pr-grp-chk" data-gid="'+g.id+'" checked style="width:15px;height:15px;accent-color:var(--primary);cursor:pointer"/>'+
+      '<span style="flex:1;font-weight:500">'+g.name+'</span>'+
+      '<span style="font-size:11px;color:var(--text2)">'+cnt+' คน</span>'+
+    '</label>';
+  }).join('');
+  document.getElementById('prAllGrp').checked = true;
+  document.getElementById('printModal').classList.add('open');
+}
+
+function prToggleAll(checked){
+  document.querySelectorAll('.pr-grp-chk').forEach(el => { el.checked = checked; });
+}
+
+// พิมพ์กลุ่มเดียวโดยตรงจากปุ่มในตาราง
+function printSingleGroup(gid){
+  const g = groups.find(x=>x.id===gid)||{name:'ไม่มีกลุ่ม'};
+  const gEmps = employees.filter(e=>e.group===gid);
+  if(!gEmps.length){ alert('กลุ่มนี้ยังไม่มีพนักงาน'); return; }
+  const mLabel = THAI_M[cM]+' '+(cY+543);
+  const days = dim(cY,cM);
+  const printedAt = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const DOW_SHORT = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const grpHtml = buildGroupHtml(g, gEmps, days, DOW_SHORT, mLabel, printedAt, true, true);
+  openPrintWindow(grpHtml, mLabel, g.name);
+}
+
+function openPrintWindow(bodyHtml, mLabel, titleLabel){
+  const printWin = window.open('','_blank','width=1200,height=800');
+  if(!printWin){ alert('กรุณาอนุญาต Popup เพื่อดูตัวอย่างก่อนพิมพ์'); return; }
+  printWin.document.write(`<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<title>รายงาน — ${titleLabel} — ${mLabel}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff;font-family:'Sarabun',sans-serif;font-size:10px;color:#1a1a2e}
+@page{size:A4 landscape;margin:10mm 12mm}
+.print-toolbar{position:fixed;top:0;left:0;right:0;z-index:9999;display:flex;align-items:center;gap:10px;background:#1e3a5f;color:#fff;padding:10px 18px;font-size:13px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.print-toolbar button{height:34px;padding:0 18px;border:none;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-print{background:#22c55e;color:#fff}.btn-print:hover{background:#16a34a}
+.btn-close{background:rgba(255,255,255,0.15);color:#fff}.btn-close:hover{background:rgba(255,255,255,0.25)}
+.toolbar-title{flex:1;font-size:14px;font-weight:700;letter-spacing:0.2px}
+.print-body{padding:54px 0 0}
+.pr-page{background:#fff;padding:12mm 12mm 10mm;margin:0 auto;max-width:297mm;page-break-after:always;break-after:page}
+.pr-page:last-child{page-break-after:auto;break-after:auto}
+.pr-header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #185FA5;padding-bottom:10px;margin-bottom:8px}
+.pr-logo-area h1{font-size:19px;font-weight:800;color:#0C447C;letter-spacing:-0.4px;margin:0 0 3px}
+.pr-period{font-size:12px;color:#185FA5;font-weight:700}
+.pr-meta{text-align:right;font-size:9.5px;color:#64748b;line-height:1.7}
+.pr-meta b{color:#1a1a2e;font-size:10.5px}
+.grp-header{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1e3a5f 0%,#0C447C 100%);color:#fff;padding:7px 14px;font-size:12px;font-weight:700;border-radius:6px;margin:12px 0 8px;letter-spacing:0.2px}
+table{width:100%;border-collapse:collapse}
+thead th{background:#1e3a5f;color:#fff;font-weight:700;padding:5px 4px;text-align:center;border:0.5px solid #2d5080;white-space:nowrap;font-size:8.5px}
+tbody tr:nth-child(even) td{background:#f8fafc}
+tbody tr:nth-child(odd) td{background:#fff}
+tbody td{border:0.5px solid #cbd5e1;padding:3px 4px;font-size:9px}
+.wknd{background:#dbeafe!important;color:#1e40af!important;font-weight:600}
+.has-work{background:#d1fae5!important;font-weight:800;color:#065f46!important}
+.has-ot{color:#1e40af;font-size:7.5px;font-weight:600}
+.emp-name{text-align:left!important;padding-left:8px!important;font-size:10px;font-weight:600;white-space:nowrap;color:#1a1a2e}
+.summary-row td{background:#e0f2fe!important;font-weight:700;font-size:9.5px;color:#0C447C;border-top:1.5px solid #93c5fd!important}
+.grand-row td{background:#dcfce7!important;font-weight:800;font-size:11px;color:#14532d;border-top:2px solid #86efac!important}
+.sum-section{margin-top:14px;padding-top:10px;border-top:2px dashed #cbd5e1}
+.sum-section h3{font-size:11px;font-weight:700;color:#0C447C;margin-bottom:8px}
+.pr-footer{margin-top:16px;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e2e8f0;padding-top:10px;font-size:9px;color:#94a3b8}
+@media print{.print-toolbar{display:none!important}.print-body{padding:0!important}.pr-page{margin:0;max-width:100%;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="print-toolbar">
+  <span class="toolbar-title">📋 รายงาน — ${titleLabel} — ${mLabel}</span>
+  <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+  <button class="btn-close" onclick="window.close()">✕ ปิด</button>
+</div>
+<div class="print-body"><div class="pr-page">${bodyHtml}</div></div>
+</body></html>`);
+  printWin.document.close();
+}
+
+function doPrintReport(){
+  const selectedGids = [...document.querySelectorAll('.pr-grp-chk:checked')].map(el=>el.dataset.gid);
+  if(!selectedGids.length){ alert('กรุณาเลือกกลุ่มอย่างน้อย 1 กลุ่ม'); return; }
+
+  const showDays = document.getElementById('prShowDays').checked;
+  const showSummary = document.getElementById('prShowSummary').checked;
+  const mLabel = THAI_M[cM]+' '+(cY+543);
+  const days = dim(cY,cM);
+
+  const printedAt = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  let html = '<link rel="preconnect" href="https://fonts.googleapis.com"/>'+
+    '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap"/>'+
+    '<style>'+
+    '@page{size:A4 landscape;margin:10mm 12mm}'+
+    'body{font-family:\'Sarabun\',sans-serif;font-size:10px;color:#1a1a2e;margin:0;background:#fff}'+
+    '.pr-page{page-break-after:always;page-break-inside:avoid;overflow:visible}'+
+    '.pr-page:last-child{page-break-after:auto}'+
+    '.pr-page{padding:10px 0 16px}'+
+    '.pr-header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #185FA5;padding-bottom:10px;margin-bottom:4px}'+
+    '.pr-logo-area h1{font-size:19px;font-weight:800;color:#0C447C;letter-spacing:-0.4px;margin:0 0 3px}'+
+    '.pr-period{font-size:13px;color:#185FA5;font-weight:700}'+
+    '.pr-meta{text-align:right;font-size:9.5px;color:#64748b;line-height:1.7}'+
+    '.pr-meta b{color:#1a1a2e;font-size:10.5px}'+
+    '.grp-header{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1e3a5f 0%,#0C447C 100%);color:#fff;padding:7px 14px;font-size:12px;font-weight:700;border-radius:6px;margin:14px 0 10px;letter-spacing:0.2px}'+
+    'table{width:100%;border-collapse:collapse}'+
+    'thead th{background:#1e3a5f;color:#fff;font-weight:700;padding:5px 4px;text-align:center;border:0.5px solid #2d5080;white-space:nowrap;font-size:8.5px}'+
+    'tbody tr:nth-child(even) td{background:#f8fafc}'+
+    'tbody tr:nth-child(odd) td{background:#ffffff}'+
+    'tbody td{border:0.5px solid #cbd5e1;padding:3px 4px;font-size:9px}'+
+    '.wknd{background:#dbeafe!important;color:#1e40af!important;font-weight:600}'+
+    '.has-work{background:#d1fae5!important;font-weight:800;color:#065f46!important}'+
+    '.has-ot{color:#1e40af;font-size:8px;font-weight:600}'+
+    '.emp-name{text-align:left!important;padding-left:8px!important;font-size:10px;font-weight:600;white-space:nowrap;color:#1a1a2e}'+
+    '.summary-row td{background:#e0f2fe!important;font-weight:700;font-size:9.5px;color:#0C447C;border-top:1.5px solid #93c5fd!important}'+
+    '.grand-row td{background:#dcfce7!important;font-weight:800;font-size:11px;color:#14532d;border-top:2px solid #86efac!important}'+
+    '.pr-footer{margin-top:18px;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e2e8f0;padding-top:10px;font-size:9px;color:#94a3b8}'+
+    '.sign-box{text-align:center;width:160px}'+
+    '.sign-line{border-bottom:1px solid #94a3b8;margin-bottom:4px;height:28px}'+
+    '.sum-section{margin-top:14px;padding-top:10px;border-top:2px dashed #cbd5e1}'+
+    '.sum-section h3{font-size:11px;font-weight:700;color:#0C447C;margin-bottom:8px}'+
+    '</style>';
+
+  const DOW_SHORT = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  selectedGids.forEach((gid, gi) => {
+    const g = groups.find(x=>x.id===gid) || {name:'ไม่มีกลุ่ม'};
+    const gEmps = employees.filter(e=>e.group===gid);
+    if(!gEmps.length) return;
+
+    // Professional Header
+    html += '<div class="pr-page">';
+    html += '<div class="pr-header">'
+      +'<div class="pr-logo-area">'
+      +'<h1>📋 รายงานการทำงาน</h1>'
+      +'<div class="pr-period">ประจำเดือน '+mLabel+'</div>'
+      +'</div>'
+      +'<div class="pr-meta">'
+      +'<div>กลุ่ม/แผนก: <b>'+g.name+'</b></div>'
+      +'<div>จำนวนพนักงาน: <b>'+gEmps.length+' คน</b></div>'
+      +'<div>พิมพ์เมื่อ: '+printedAt+'</div>'
+      +'</div>'
+      +'</div>';
+
+    html += '<div class="grp-header">'+g.name+' — '+gEmps.length+' คน</div>';
+
+    if(showDays){
+      // Day header row
+      html += '<table><thead><tr>'
+        +'<th style="min-width:26px;text-align:center">#</th>'
+        +'<th style="min-width:130px;text-align:left;padding-left:8px">ชื่อพนักงาน</th>'
+        +'<th style="min-width:50px">฿/วัน</th>';
+      for(let d=1;d<=days;d++){
+        const wk = isWknd(cY,cM,d);
+        html += '<th style="min-width:22px;'+(wk?'background:#1a3a6e;color:#bfdbfe':'')+'">'+d+'<br><span style="font-size:7.5px;font-weight:400;opacity:0.85">'+DOW_SHORT[new Date(cY,cM,d).getDay()]+'</span></th>';
+      }
+      html += '<th style="min-width:38px;background:#14532d">วันทำงาน</th>'
+        +'<th style="min-width:38px;background:#1e3a5f">OT ชม.</th>'
+        +'<th style="min-width:56px;background:#14532d">ค่าแรงวัน</th>'
+        +'<th style="min-width:50px;background:#1e3a5f">ค่า OT</th>'
+        +'<th style="min-width:66px;background:#0f3a1a">รวม ฿</th>'
+        +'</tr></thead><tbody>';
+
+      let totW=0,totOt=0,totDP=0,totOP=0,totPay=0;
+      gEmps.forEach((emp,ei) => {
+        const {workDays,dayPay,otH,otPay,pay} = calcEmp(emp);
+        totW+=workDays;totOt+=otH;totDP+=dayPay;totOP+=otPay;totPay+=pay;
+        html += '<tr>'
+          +'<td style="text-align:center;color:#94a3b8;font-size:8.5px">'+(ei+1)+'</td>'
+          +'<td class="emp-name">'+emp.name+'</td>'
+          +'<td style="text-align:center;color:#64748b">'+emp.wage.toLocaleString()+'</td>';
+        for(let d=1;d<=days;d++){
+          const r = att[aKey(emp.id,d)]||{mul:'',ot:''};
+          const mul = r.mul===''||r.mul===0?0:Number(r.mul);
+          const ot = Number(r.ot)||0;
+          const wk = isWknd(cY,cM,d);
+          let cellClass = wk ? 'wknd' : '';
+          let cellContent = '';
+          if(mul>0 && ot>0){
+            cellContent = '<span style="color:#065f46;font-weight:800">'+mul+'</span><br><span style="color:#1e40af;font-size:7.5px;font-weight:600">'+ot+'ชม</span>';
+            cellClass = 'has-work';
+          } else if(mul>0){
+            cellContent = '<span style="font-weight:800;color:#065f46">'+mul+'</span>';
+            cellClass = 'has-work';
+          } else if(ot>0){
+            cellContent = '<span class="has-ot">OT'+ot+'</span>';
+            cellClass = (wk?'wknd':'');
+          } else {
+            cellContent = '<span style="color:#e2e8f0;font-size:8px">—</span>';
+          }
+          html += '<td class="'+cellClass+'" style="text-align:center">'+cellContent+'</td>';
+        }
+        html += '<td style="text-align:center;font-weight:600">'+workDays+'</td>'
+          +'<td style="text-align:center;color:#1e40af">'+(otH||'-')+'</td>'
+          +'<td style="text-align:right;color:#065f46">'+dayPay.toLocaleString()+'</td>'
+          +'<td style="text-align:right;color:#1e40af">'+(otPay?otPay.toLocaleString():'-')+'</td>'
+          +'<td style="text-align:right;font-weight:700;color:#14532d">'+pay.toLocaleString()+'</td></tr>';
+      });
+
+      // Group summary row
+      html += '<tr class="summary-row">'
+        +'<td colspan="3" style="text-align:right">รวม '+g.name+'</td>'
+        +'<td colspan="'+days+'"></td>'
+        +'<td style="text-align:center">'+totW+'</td>'
+        +'<td style="text-align:center;color:#1e40af">'+(totOt||'-')+'</td>'
+        +'<td style="text-align:right;color:#065f46">'+totDP.toLocaleString()+'</td>'
+        +'<td style="text-align:right;color:#1e40af">'+(totOP?totOP.toLocaleString():'-')+'</td>'
+        +'<td style="text-align:right;color:#14532d">'+totPay.toLocaleString()+'</td>'
+        +'</tr></tbody></table>';
+    }
+
+    if(showSummary){
+      // Compact summary table
+      html += '<div class="sum-section"><h3>📊 สรุปยอดรวมประจำเดือน — '+g.name+'</h3>'
+        +'<table style="width:auto;min-width:420px"><thead><tr>'
+        +'<th style="text-align:left;min-width:130px">ชื่อพนักงาน</th>'
+        +'<th style="min-width:52px">วันทำงาน</th><th style="min-width:58px">ตัวคูณ(เฉลี่ย)</th><th style="min-width:52px">OT (ชม.)</th>'
+        +'<th style="min-width:72px">ค่าแรงวัน</th><th style="min-width:62px">ค่า OT</th><th style="min-width:80px">รวมค่าแรง</th>'
+        +'</tr></thead><tbody>';
+
+      let totW2=0,totOt2=0,totDP2=0,totOP2=0,totPay2=0;
+      gEmps.forEach(emp => {
+        const {workDays,dayPay,otH,otPay,pay} = calcEmp(emp);
+        totW2+=workDays;totOt2+=otH;totDP2+=dayPay;totOP2+=otPay;totPay2+=pay;
+        const avgMul = workDays>0?(dayPay/(emp.wage*workDays)).toFixed(2):'-';
+        html += '<tr>'
+          +'<td class="emp-name">'+emp.name+'</td>'
+          +'<td style="text-align:center">'+workDays+'</td>'
+          +'<td style="text-align:center">'+avgMul+'</td>'
+          +'<td style="text-align:center;color:#1e40af">'+(otH||'-')+'</td>'
+          +'<td style="text-align:right;color:#065f46">'+dayPay.toLocaleString()+' ฿</td>'
+          +'<td style="text-align:right;color:#1e40af">'+(otPay?otPay.toLocaleString()+' ฿':'-')+'</td>'
+          +'<td style="text-align:right;font-weight:800;color:#14532d">'+pay.toLocaleString()+' ฿</td>'
+          +'</tr>';
+      });
+      html += '<tr class="grand-row">'
+        +'<td style="text-align:left;padding-left:8px">รวมทั้งสิ้น</td>'
+        +'<td style="text-align:center">'+totW2+'</td>'
+        +'<td></td>'
+        +'<td style="text-align:center">'+totOt2+'</td>'
+        +'<td style="text-align:right">'+totDP2.toLocaleString()+' ฿</td>'
+        +'<td style="text-align:right">'+(totOP2?totOP2.toLocaleString()+' ฿':'-')+'</td>'
+        +'<td style="text-align:right">'+totPay2.toLocaleString()+' ฿</td>'
+        +'</tr></tbody></table></div>';
+    }
+
+    // Footer — timestamp only
+    html += '<div class="pr-footer">'
+      +'<div style="font-size:9px;color:#94a3b8">ระบบเงินเดือน v5 · สร้างอัตโนมัติ '+printedAt+'</div>'
+      +'</div>';
+
+    html += '</div>'; // end pr-page
+  });
+
+  // Wrap all pages
+  const fullHtml = '<div style="padding:54px 0 0">'+html+'</div>';
+  openPrintWindow(fullHtml, mLabel, 'รายงานการทำงาน');
+  closeM('printModal');
+}
+
+// พิมพ์แยกแต่ละกลุ่ม (เปิด popup ทีละกลุ่ม)
+function doPrintSeparate(){
+  const selectedGids = [...document.querySelectorAll('.pr-grp-chk:checked')].map(el=>el.dataset.gid);
+  if(!selectedGids.length){ alert('กรุณาเลือกกลุ่มอย่างน้อย 1 กลุ่ม'); return; }
+  if(selectedGids.length > 5){ if(!confirm(`จะเปิด ${selectedGids.length} หน้าต่างพร้อมกัน — ยืนยัน?`)) return; }
+  const showDays = document.getElementById('prShowDays').checked;
+  const showSummary = document.getElementById('prShowSummary').checked;
+  const mLabel = THAI_M[cM]+' '+(cY+543);
+  const days = dim(cY,cM);
+  const printedAt = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const DOW_SHORT = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  selectedGids.forEach((gid, i) => {
+    const g = groups.find(x=>x.id===gid)||{name:'ไม่มีกลุ่ม'};
+    const gEmps = employees.filter(e=>e.group===gid);
+    if(!gEmps.length) return;
+    setTimeout(()=>{
+      const grpHtml = buildGroupHtml(g, gEmps, days, DOW_SHORT, mLabel, printedAt, showDays, showSummary);
+      openPrintWindow(grpHtml, mLabel, g.name);
+    }, i * 300);
+  });
+  closeM('printModal');
+}
+
+// ─── Export Image ─────────────────────────────────────────────
+function openExportImg(){
+  const list = document.getElementById('imgGrpList');
+  list.innerHTML = groups.map(g => {
+    const cnt = employees.filter(e=>e.group===g.id).length;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:0.5px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px">'
+      +'<input type="checkbox" class="img-grp-chk" data-gid="'+g.id+'" checked style="width:15px;height:15px;accent-color:#7c3aed;cursor:pointer"/>'
+      +'<span style="flex:1;font-weight:500">'+g.name+'</span>'
+      +'<span style="font-size:11px;color:var(--text2)">'+cnt+' คน</span>'
+      +'</label>';
+  }).join('');
+  document.getElementById('imgAllGrp').checked = true;
+  document.getElementById('imgProgress').style.display = 'none';
+  document.getElementById('exportImgModal').classList.add('open');
+}
+
+function imgToggleAll(checked){
+  document.querySelectorAll('.img-grp-chk').forEach(el => { el.checked = checked; });
+}
+
+async function doExportImages(){
+  const selectedGids = [...document.querySelectorAll('.img-grp-chk:checked')].map(el=>el.dataset.gid);
+  if(!selectedGids.length){ alert('กรุณาเลือกกลุ่มอย่างน้อย 1 กลุ่ม'); return; }
+
+  const showDays = document.getElementById('imgShowDays').checked;
+  const showSummary = document.getElementById('imgShowSummary').checked;
+  const mLabel = THAI_M[cM]+' '+(cY+543);
+  const printedAt = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const btn = document.getElementById('imgExportBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลัง Export...';
+  const prog = document.getElementById('imgProgress');
+  prog.style.display = 'block';
+
+  // Load html2canvas if not already loaded
+  if(!window.html2canvas){
+    await new Promise((res,rej)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const days = dim(cY,cM);
+  const DOW_SHORT = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  for(let gi=0; gi<selectedGids.length; gi++){
+    const gid = selectedGids[gi];
+    const g = groups.find(x=>x.id===gid)||{name:'ไม่มีกลุ่ม'};
+    const gEmps = employees.filter(e=>e.group===gid);
+    if(!gEmps.length) continue;
+
+    prog.textContent = `กำลังสร้างรูปภาพ: ${g.name} (${gi+1}/${selectedGids.length})...`;
+
+    // Build HTML for this group
+    let html = buildGroupHtml(g, gEmps, days, DOW_SHORT, mLabel, printedAt, showDays, showSummary);
+
+    // Render into hidden container
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;font-family:Sarabun,sans-serif;width:1400px;padding:24px 28px';
+    container.innerHTML = `<style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body,div{font-family:'Sarabun',sans-serif}
+      .pr-header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #185FA5;padding-bottom:10px;margin-bottom:8px}
+      .pr-logo-area h1{font-size:22px;font-weight:800;color:#0C447C;letter-spacing:-0.4px;margin:0 0 4px}
+      .pr-period{font-size:14px;color:#185FA5;font-weight:700}
+      .pr-meta{text-align:right;font-size:11px;color:#64748b;line-height:1.8}
+      .pr-meta b{color:#1a1a2e;font-size:12px}
+      .grp-header{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1e3a5f 0%,#0C447C 100%);color:#fff;padding:8px 16px;font-size:14px;font-weight:700;border-radius:6px;margin:14px 0 10px}
+      table{width:100%;border-collapse:collapse}
+      thead th{background:#1e3a5f;color:#fff;font-weight:700;padding:6px 5px;text-align:center;border:0.5px solid #2d5080;white-space:nowrap;font-size:10px}
+      tbody tr:nth-child(even) td{background:#f8fafc}
+      tbody tr:nth-child(odd) td{background:#fff}
+      tbody td{border:0.5px solid #cbd5e1;padding:4px 5px;font-size:11px}
+      .wknd{background:#dbeafe!important;color:#1e40af!important;font-weight:600}
+      .has-work{background:#d1fae5!important;font-weight:800;color:#065f46!important}
+      .has-ot{color:#1e40af;font-size:9px;font-weight:600}
+      .emp-name{text-align:left!important;padding-left:10px!important;font-size:12px;font-weight:600;white-space:nowrap;color:#1a1a2e}
+      .summary-row td{background:#e0f2fe!important;font-weight:700;font-size:11px;color:#0C447C;border-top:2px solid #93c5fd!important}
+      .grand-row td{background:#dcfce7!important;font-weight:800;font-size:12px;color:#14532d;border-top:2px solid #86efac!important}
+      .sum-section{margin-top:16px;padding-top:12px;border-top:2px dashed #cbd5e1}
+      .sum-section h3{font-size:13px;font-weight:700;color:#0C447C;margin-bottom:10px}
+      .pr-footer{margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8}
+    </style>` + html;
+    document.body.appendChild(container);
+
+    await new Promise(r=>setTimeout(r,80));
+
+    try{
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+      const link = document.createElement('a');
+      const safeName = g.name.replace(/[^ก-๙a-zA-Z0-9]/g,'_');
+      link.download = `รายงาน_${safeName}_${mLabel.replace(/ /g,'_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      await new Promise(r=>setTimeout(r,400));
+    } catch(e){
+      console.error('Export error:', e);
+      prog.textContent = `เกิดข้อผิดพลาด: ${g.name}`;
+    } finally {
+      document.body.removeChild(container);
+    }
+  }
+
+  prog.innerHTML = `✅ Export สำเร็จ ${selectedGids.length} กลุ่ม — ตรวจสอบในโฟลเดอร์ Downloads`;
+  prog.style.background = '#f0fdf4';
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-photo-down"></i> Export PNG';
+}
+
+// ─── Export Image by Site ────────────────────────────────────
+function openExportImgSite(){
+  if(!sites.length){ alert('ยังไม่มีสถานที่ทำงาน — กรุณาเพิ่มสถานที่ก่อน'); return; }
+  const list = document.getElementById('imgSiteList');
+  const days = dim(cY,cM);
+  list.innerHTML = sites.map(s => {
+    // นับพนักงานที่มีวันทำงานในสถานที่นี้
+    const cnt = employees.filter(e=>{
+      for(let d=1;d<=days;d++){const r=att[aKey(e.id,d)];if(r&&r.site===s.id&&(Number(r.mul)||0)>0)return true;}
+      return false;
+    }).length;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:0.5px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px">'
+      +'<input type="checkbox" class="img-site-chk" data-sid="'+s.id+'" '+(cnt>0?'checked':'')+' style="width:15px;height:15px;accent-color:#7c3aed;cursor:pointer"/>'
+      +'<i class="ti ti-map-pin" style="font-size:13px;color:#7c3aed"></i>'
+      +'<span style="flex:1;font-weight:500">'+s.name+'</span>'
+      +'<span style="font-size:11px;color:'+(cnt>0?'#7c3aed':'var(--text3)')+'">'+cnt+' คน</span>'
+      +'</label>';
+  }).join('');
+  document.getElementById('imgSiteAll').checked = true;
+  document.getElementById('imgSiteProgress').style.display = 'none';
+  document.getElementById('exportImgSiteModal').classList.add('open');
+}
+
+function imgSiteToggleAll(checked){
+  document.querySelectorAll('.img-site-chk').forEach(el => { el.checked = checked; });
+}
+
+async function doExportImagesBySite(){
+  const selectedSids = [...document.querySelectorAll('.img-site-chk:checked')].map(el=>el.dataset.sid);
+  if(!selectedSids.length){ alert('กรุณาเลือกสถานที่อย่างน้อย 1 แห่ง'); return; }
+
+  const showDays = document.getElementById('imgSiteShowDays').checked;
+  const showSummary = document.getElementById('imgSiteShowSummary').checked;
+  const mLabel = THAI_M[cM]+' '+(cY+543);
+  const printedAt = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const btn = document.getElementById('imgSiteExportBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลัง Export...';
+  const prog = document.getElementById('imgSiteProgress');
+  prog.style.display = 'block';
+
+  if(!window.html2canvas){
+    await new Promise((res,rej)=>{
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const days = dim(cY,cM);
+  const DOW_SHORT = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  let exported = 0;
+
+  for(let si=0; si<selectedSids.length; si++){
+    const sid = selectedSids[si];
+    const s = sites.find(x=>x.id===sid)||{name:'ไม่ระบุ'};
+
+    prog.textContent = `กำลังสร้างรูปภาพ: 📍 ${s.name} (${si+1}/${selectedSids.length})...`;
+
+    // ตรวจสอบว่ามีข้อมูลหรือไม่
+    const siteEmps = employees.filter(e=>{
+      for(let d=1;d<=days;d++){const r=att[aKey(e.id,d)];if(r&&r.site===sid&&(Number(r.mul)||0)>0)return true;}
+      return false;
+    });
+    if(!siteEmps.length){
+      prog.textContent = `⚠️ ข้ามสถานที่ "${s.name}" — ไม่มีข้อมูลการทำงาน`;
+      await new Promise(r=>setTimeout(r,600));
+      continue;
+    }
+
+    // สร้าง HTML สำหรับสถานที่นี้
+    // buildSiteHtml คืน div.pr-page ทั้งหมด — เอาออกมาแค่เนื้อหาข้างใน
+    const fullHtml = buildSiteHtml(s, sid, days, DOW_SHORT, mLabel, printedAt, showSummary);
+
+    const container = document.createElement('div');
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;font-family:Sarabun,sans-serif;width:1400px;padding:24px 28px';
+    container.innerHTML = `<style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body,div{font-family:'Sarabun',sans-serif}
+      .pr-page{background:#fff}
+      .pr-header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:3px solid #6d28d9;padding-bottom:10px;margin-bottom:8px}
+      .pr-logo-area h1{font-size:22px;font-weight:800;color:#4c1d95;letter-spacing:-0.4px;margin:0 0 4px}
+      .pr-period{font-size:14px;color:#7c3aed;font-weight:700}
+      .pr-meta{text-align:right;font-size:11px;color:#64748b;line-height:1.8}
+      .pr-meta b{color:#1a1a2e;font-size:12px}
+      .grp-header{display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6d28d9 0%,#7c3aed 100%);color:#fff;padding:8px 16px;font-size:14px;font-weight:700;border-radius:6px;margin:14px 0 10px}
+      table{width:100%;border-collapse:collapse}
+      thead th{background:#4c1d95;color:#fff;font-weight:700;padding:6px 5px;text-align:center;border:0.5px solid #6d28d9;white-space:nowrap;font-size:10px}
+      tbody tr:nth-child(even) td{background:#f8fafc}
+      tbody tr:nth-child(odd) td{background:#fff}
+      tbody td{border:0.5px solid #cbd5e1;padding:4px 5px;font-size:11px}
+      .wknd{background:#dbeafe!important;color:#1e40af!important;font-weight:600}
+      .has-work{background:#d1fae5!important;font-weight:800;color:#065f46!important}
+      .has-ot{color:#1e40af;font-size:9px;font-weight:600}
+      .emp-name{text-align:left!important;padding-left:10px!important;font-size:12px;font-weight:600;white-space:nowrap;color:#1a1a2e}
+      .summary-row td{background:#ede9fe!important;font-weight:700;font-size:11px;color:#4c1d95;border-top:2px solid #c4b5fd!important}
+      .grand-row td{background:#dcfce7!important;font-weight:800;font-size:12px;color:#14532d;border-top:2px solid #86efac!important}
+      .sum-section{margin-top:16px;padding-top:12px;border-top:2px dashed #c4b5fd}
+      .sum-section h3{font-size:13px;font-weight:700;color:#6d28d9;margin-bottom:10px}
+      .pr-footer{margin-top:16px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8}
+    </style>` + fullHtml;
+    document.body.appendChild(container);
+
+    await new Promise(r=>setTimeout(r,80));
+
+    try{
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+      const link = document.createElement('a');
+      const safeName = s.name.replace(/[^ก-๙a-zA-Z0-9]/g,'_');
+      link.download = `รายงาน_สถานที่_${safeName}_${mLabel.replace(/ /g,'_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      exported++;
+      await new Promise(r=>setTimeout(r,400));
+    } catch(e){
+      console.error('Export site error:', e);
+      prog.textContent = `เกิดข้อผิดพลาด: ${s.name}`;
+    } finally {
+      document.body.removeChild(container);
+    }
+  }
+
+  prog.innerHTML = `✅ Export สำเร็จ ${exported} สถานที่ — ตรวจสอบในโฟลเดอร์ Downloads`;
+  prog.style.background = '#f0fdf4';
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-photo-down"></i> Export PNG';
+}
+
+function buildGroupHtml(g, gEmps, days, DOW_SHORT, mLabel, printedAt, showDays, showSummary){
+  let html = '';
+  html += '<div class="pr-header">'
+    +'<div class="pr-logo-area"><h1>📋 รายงานการทำงาน</h1><div class="pr-period">ประจำเดือน '+mLabel+'</div></div>'
+    +'<div class="pr-meta">'
+    +'<div>กลุ่ม/แผนก: <b>'+g.name+'</b></div>'
+    +'<div>จำนวนพนักงาน: <b>'+gEmps.length+' คน</b></div>'
+    +'<div>สร้างเมื่อ: '+printedAt+'</div>'
+    +'</div></div>';
+
+  html += '<div class="grp-header">▌ '+g.name+' — '+gEmps.length+' คน</div>';
+
+  if(showDays){
+    html += '<table><thead><tr>'
+      +'<th style="min-width:28px">#</th>'
+      +'<th style="min-width:140px;text-align:left;padding-left:10px">ชื่อพนักงาน</th>'
+      +'<th style="min-width:54px">฿/วัน</th>';
+    for(let d=1;d<=days;d++){
+      const wk=isWknd(cY,cM,d);
+      html+='<th style="min-width:24px;'+(wk?'background:#1a3a6e;color:#bfdbfe':'')+'">'+d+'<br><span style="font-size:8px;opacity:.8">'+DOW_SHORT[new Date(cY,cM,d).getDay()]+'</span></th>';
+    }
+    html+='<th style="min-width:42px;background:#14532d">วันทำงาน</th>'
+      +'<th style="min-width:40px;background:#1e3a5f">OT ชม.</th>'
+      +'<th style="min-width:60px;background:#14532d">ค่าแรงวัน</th>'
+      +'<th style="min-width:54px;background:#1e3a5f">ค่า OT</th>'
+      +'<th style="min-width:70px;background:#0f3a1a">รวม ฿</th>'
+      +'</tr></thead><tbody>';
+
+    let totW=0,totOt=0,totDP=0,totOP=0,totPay=0;
+    gEmps.forEach((emp,ei)=>{
+      const {workDays,dayPay,otH,otPay,pay}=calcEmp(emp);
+      totW+=workDays;totOt+=otH;totDP+=dayPay;totOP+=otPay;totPay+=pay;
+      html+='<tr><td style="text-align:center;color:#94a3b8;font-size:9px">'+(ei+1)+'</td>'
+        +'<td class="emp-name">'+emp.name+'</td>'
+        +'<td style="text-align:center;color:#64748b">'+emp.wage.toLocaleString()+'</td>';
+      for(let d=1;d<=days;d++){
+        const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+        const mul=r.mul===''||r.mul===0?0:Number(r.mul);
+        const ot=Number(r.ot)||0;
+        const wk=isWknd(cY,cM,d);
+        let cls=wk?'wknd':'';
+        let cell='<span style="color:#e2e8f0;font-size:9px">—</span>';
+        if(mul>0&&ot>0){cell='<span style="color:#065f46;font-weight:800">'+mul+'</span><br><span class="has-ot">'+ot+'ชม</span>';cls='has-work';}
+        else if(mul>0){cell='<span style="font-weight:800;color:#065f46">'+mul+'</span>';cls='has-work';}
+        else if(ot>0){cell='<span class="has-ot">OT'+ot+'</span>';}
+        html+='<td class="'+cls+'" style="text-align:center">'+cell+'</td>';
+      }
+      html+='<td style="text-align:center;font-weight:700">'+workDays+'</td>'
+        +'<td style="text-align:center;color:#1e40af">'+(otH||'-')+'</td>'
+        +'<td style="text-align:right;color:#065f46">'+dayPay.toLocaleString()+'</td>'
+        +'<td style="text-align:right;color:#1e40af">'+(otPay?otPay.toLocaleString():'-')+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:#14532d">'+pay.toLocaleString()+'</td></tr>';
+    });
+    html+='<tr class="summary-row">'
+      +'<td colspan="3" style="text-align:right;padding-right:10px">รวม '+g.name+'</td>'
+      +'<td colspan="'+days+'"></td>'
+      +'<td style="text-align:center">'+totW+'</td>'
+      +'<td style="text-align:center;color:#1e40af">'+(totOt||'-')+'</td>'
+      +'<td style="text-align:right;color:#065f46">'+totDP.toLocaleString()+'</td>'
+      +'<td style="text-align:right;color:#1e40af">'+(totOP?totOP.toLocaleString():'-')+'</td>'
+      +'<td style="text-align:right;color:#14532d">'+totPay.toLocaleString()+'</td>'
+      +'</tr></tbody></table>';
+  }
+
+  if(showSummary){
+    let totW2=0,totOt2=0,totDP2=0,totOP2=0,totPay2=0;
+    let rows='';
+    gEmps.forEach(emp=>{
+      const {workDays,dayPay,otH,otPay,pay}=calcEmp(emp);
+      totW2+=workDays;totOt2+=otH;totDP2+=dayPay;totOP2+=otPay;totPay2+=pay;
+      const avgMul=workDays>0?(dayPay/(emp.wage*workDays)).toFixed(2):'-';
+      rows+='<tr><td class="emp-name">'+emp.name+'</td>'
+        +'<td style="text-align:center">'+workDays+'</td>'
+        +'<td style="text-align:center">'+avgMul+'</td>'
+        +'<td style="text-align:center;color:#1e40af">'+(otH||'-')+'</td>'
+        +'<td style="text-align:right;color:#065f46">'+dayPay.toLocaleString()+' ฿</td>'
+        +'<td style="text-align:right;color:#1e40af">'+(otPay?otPay.toLocaleString()+' ฿':'-')+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:#14532d">'+pay.toLocaleString()+' ฿</td></tr>';
+    });
+    html+='<div class="sum-section"><h3>📊 สรุปยอดรวม — '+g.name+'</h3>'
+      +'<table style="width:auto;min-width:480px"><thead><tr>'
+      +'<th style="text-align:left;min-width:140px">ชื่อพนักงาน</th>'
+      +'<th style="min-width:60px">วันทำงาน</th><th style="min-width:70px">ตัวคูณ(เฉลี่ย)</th>'
+      +'<th style="min-width:60px">OT (ชม.)</th><th style="min-width:80px">ค่าแรงวัน</th>'
+      +'<th style="min-width:70px">ค่า OT</th><th style="min-width:90px">รวมค่าแรง</th>'
+      +'</tr></thead><tbody>'+rows
+      +'<tr class="grand-row">'
+      +'<td style="text-align:left;padding-left:10px">รวมทั้งสิ้น</td>'
+      +'<td style="text-align:center">'+totW2+'</td><td></td>'
+      +'<td style="text-align:center">'+totOt2+'</td>'
+      +'<td style="text-align:right">'+totDP2.toLocaleString()+' ฿</td>'
+      +'<td style="text-align:right">'+(totOP2?totOP2.toLocaleString()+' ฿':'-')+'</td>'
+      +'<td style="text-align:right">'+totPay2.toLocaleString()+' ฿</td>'
+      +'</tr></tbody></table></div>';
+  }
+
+  html+='<div class="pr-footer">ระบบเงินเดือน v5 · สร้างอัตโนมัติ '+printedAt+'</div>';
+  return html;
+}
+
+// พิมพ์สถานที่เดียวจากตารางสรุป
+function printSingleSite(sid){
+  const s=sites.find(x=>x.id===sid)||{name:'ไม่ระบุ'};
+  const mLabel=THAI_M[cM]+' '+(cY+543);
+  const days=dim(cY,cM);
+  const printedAt=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const DOW_SHORT=['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const html=buildSiteHtml(s, sid, days, DOW_SHORT, mLabel, printedAt, true);
+  openPrintWindow(html, mLabel, '📍 '+s.name);
+}
+
+// ─── Site Management ──────────────────────────────────────────
+function openSiteMgr(){
+  renderSiteList();
+  document.getElementById('iSiteName').value='';
+  document.getElementById('siteModal').classList.add('open');
+}
+function renderSiteList(){
+  const el=document.getElementById('siteList');
+  if(!sites.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:10px;text-align:center">ยังไม่มีสถานที่ — กรอกชื่อด้านบนแล้วกด "เพิ่ม"</div>';return;}
+  el.innerHTML=sites.map(s=>{
+    // นับวันทำงานในสถานที่นี้เดือนปัจจุบัน
+    let dayCount=0;
+    employees.forEach(e=>{
+      const days=dim(cY,cM);
+      for(let d=1;d<=days;d++){const r=att[aKey(e.id,d)];if(r&&r.site===s.id&&(Number(r.mul)||0)>0)dayCount++;}
+    });
+    return`<div class="gitem">
+      <span><i class="ti ti-map-pin" style="font-size:12px;color:#7c3aed;margin-right:4px"></i>${s.name}</span>
+      <div style="display:flex;gap:5px;align-items:center">
+        <span style="font-size:11px;color:var(--text3)">${dayCount} วัน-คน</span>
+        <button class="btn smd" onclick="delSite('${s.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function saveSite(){
+  const name=document.getElementById('iSiteName').value.trim();if(!name)return;
+  if(sites.find(s=>s.name===name)){alert('มีสถานที่นี้อยู่แล้ว');return;}
+  sites.push({id:'s'+Date.now(),name});
+  document.getElementById('iSiteName').value='';
+  renderSiteList();syncSels();saveData();
+}
+function delSite(sid){
+  // ตรวจว่ามีการใช้งานไหม
+  let used=false;
+  employees.forEach(e=>{const days=dim(cY,cM);for(let d=1;d<=days;d++){const r=att[aKey(e.id,d)];if(r&&r.site===sid){used=true;}}});
+  if(used&&!confirm('สถานที่นี้มีข้อมูลการทำงานอยู่\nลบจะทำให้วันทำงานไม่มีสถานที่ — ยืนยัน?'))return;
+  sites=sites.filter(s=>s.id!==sid);
+  // clear site from att
+  Object.values(att).forEach(r=>{if(r.site===sid)delete r.site;});
+  renderSiteList();syncSels();render();saveData();
+}
+
+// ─── Site Picker Popup ────────────────────────────────────────
+let _sitePickerEid=null,_sitePickerDay=null;
+function openSitePicker(ev,eid,d){
+  ev.preventDefault();
+  _sitePickerEid=eid;_sitePickerDay=d;
+  const pop=document.getElementById('sitePickerPop');
+  const r=att[aKey(eid,d)]||{};
+  const curSite=r.site||'';
+
+  let html='<div style="padding:4px 12px 4px;font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px">เลือกสถานที่ทำงาน</div>';
+  html+=`<div onclick="setSiteForDay(null)" style="padding:7px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;${curSite===''?'background:#f0f4f8;font-weight:600':''}" onmouseover="this.style.background='#f0f4f8'" onmouseout="this.style.background='${curSite===''?'#f0f4f8':''}'">
+    <span style="width:10px;height:10px;border-radius:50%;border:1.5px solid #94a3b8;display:inline-block"></span> ไม่ระบุสถานที่
+  </div>`;
+  sites.forEach(s=>{
+    const isCur=curSite===s.id;
+    html+=`<div onclick="setSiteForDay('${s.id}')" style="padding:7px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;${isCur?'background:#f5f3ff;font-weight:600':''}" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background='${isCur?'#f5f3ff':''}'">
+      <span style="width:10px;height:10px;border-radius:50%;background:#7c3aed;display:inline-block"></span> ${s.name}
+    </div>`;
+  });
+  if(!sites.length){
+    html+=`<div style="padding:8px 14px;font-size:11px;color:var(--text3)">ยังไม่มีสถานที่ — กด "จัดการสถานที่"</div>`;
+    html+=`<div onclick="closeM2();openSiteMgr()" style="padding:7px 14px;font-size:12px;cursor:pointer;color:#7c3aed;font-weight:600" onmouseover="this.style.background='#f5f3ff'" onmouseout="this.style.background=''"><i class="ti ti-plus"></i> เพิ่มสถานที่</div>`;
+  }
+  html+=`<div style="border-top:0.5px solid var(--border);margin-top:4px;padding:6px 14px">
+    <div onclick="clearMulFromSite()" style="font-size:11px;cursor:pointer;color:var(--red);display:flex;align-items:center;gap:4px;padding:2px 0" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'"><i class="ti ti-x" style="font-size:11px"></i> ล้างวันทำงาน</div>
+  </div>`;
+  pop.innerHTML=html;
+
+  // Position near click
+  const x=Math.min(ev.clientX,window.innerWidth-220);
+  const y=Math.min(ev.clientY,window.innerHeight-280);
+  pop.style.left=x+'px';pop.style.top=y+'px';pop.style.display='block';
+
+  const close=e=>{if(!pop.contains(e.target)){pop.style.display='none';document.removeEventListener('mousedown',close);}};
+  setTimeout(()=>document.addEventListener('mousedown',close),50);
+}
+function closeM2(){document.getElementById('sitePickerPop').style.display='none';}
+function setSiteForDay(sid){
+  document.getElementById('sitePickerPop').style.display='none';
+  const k=aKey(_sitePickerEid,_sitePickerDay);
+  if(!att[k])att[k]={mul:'',ot:''};
+  if(sid)att[k].site=sid;else delete att[k].site;
+  // auto-set mul=1 if empty
+  if(sid&&(att[k].mul===''||att[k].mul===0))att[k].mul=1;
+  render();saveData();
+}
+function clearMulFromSite(){
+  document.getElementById('sitePickerPop').style.display='none';
+  const k=aKey(_sitePickerEid,_sitePickerDay);
+  if(att[k]){att[k].mul='';att[k].ot='';delete att[k].site;}
+  render();saveData();
+}
+
+// ─── calcEmpBySite: คำนวณเฉพาะวันที่ทำงานที่สถานที่นั้น ───────
+function calcEmpBySite(emp, sid){
+  const days=dim(cY,cM);
+  let dayPay=0,otH=0,workDays=0;
+  for(let d=1;d<=days;d++){
+    const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+    if(sid && r.site !== sid) continue;
+    const mul=r.mul===''?0:Number(r.mul)||0;
+    if(mul>0){workDays++;dayPay+=emp.wage*mul;}
+    otH+=Number(r.ot)||0;
+  }
+  const otRate=emp.wage/8*1.5;
+  const otPay=Math.round(otH*otRate);
+  return{workDays,dayPay:Math.round(dayPay),otH,otPay,otRate,pay:Math.round(dayPay+otPay)};
+}
+
+// ─── Print by Site ────────────────────────────────────────────
+function openPrintSite(){
+  if(!sites.length){alert('ยังไม่มีสถานที่ — กรุณาเพิ่มสถานที่ก่อน');openSiteMgr();return;}
+  const list=document.getElementById('prsSiteList');
+  list.innerHTML=sites.map(s=>{
+    let dayCount=0;
+    employees.forEach(e=>{const days=dim(cY,cM);for(let d=1;d<=days;d++){const r=att[aKey(e.id,d)];if(r&&r.site===s.id&&(Number(r.mul)||0)>0)dayCount++;}});
+    return`<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:0.5px solid var(--border);border-radius:8px;background:var(--card);cursor:pointer;font-size:13px">
+      <input type="checkbox" class="prs-site-chk" data-sid="${s.id}" checked style="width:15px;height:15px;accent-color:#7c3aed;cursor:pointer"/>
+      <i class="ti ti-map-pin" style="font-size:13px;color:#7c3aed"></i>
+      <span style="flex:1;font-weight:500">${s.name}</span>
+      <span style="font-size:11px;color:var(--text2)">${dayCount} วัน-คน</span>
+    </label>`;
+  }).join('');
+  document.getElementById('prsAllSite').checked=true;
+  document.getElementById('printSiteModal').classList.add('open');
+}
+function prsToggleAll(checked){
+  document.querySelectorAll('.prs-site-chk').forEach(el=>{el.checked=checked;});
+}
+
+function doPrintBySite(){
+  const selectedSids=[...document.querySelectorAll('.prs-site-chk:checked')].map(el=>el.dataset.sid);
+  if(!selectedSids.length){alert('กรุณาเลือกสถานที่อย่างน้อย 1 แห่ง');return;}
+  const sepWin=document.getElementById('prsSepWin').checked;
+  const showSummary=document.getElementById('prsShowSummary').checked;
+  const mLabel=THAI_M[cM]+' '+(cY+543);
+  const days=dim(cY,cM);
+  const printedAt=new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const DOW_SHORT=['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  if(sepWin){
+    if(selectedSids.length>5&&!confirm(`จะเปิด ${selectedSids.length} หน้าต่าง — ยืนยัน?`))return;
+    selectedSids.forEach((sid,i)=>{
+      setTimeout(()=>{
+        const s=sites.find(x=>x.id===sid)||{name:'ไม่ระบุ'};
+        const html=buildSiteHtml(s, sid, days, DOW_SHORT, mLabel, printedAt, showSummary);
+        openPrintWindow(html, mLabel, '📍 '+s.name);
+      },i*300);
+    });
+  } else {
+    let html='';
+    selectedSids.forEach(sid=>{
+      const s=sites.find(x=>x.id===sid)||{name:'ไม่ระบุ'};
+      html+=buildSiteHtml(s, sid, days, DOW_SHORT, mLabel, printedAt, showSummary);
+    });
+    openPrintWindow('<div style="padding:54px 0 0">'+html+'</div>', mLabel, 'รายงานตามสถานที่');
+  }
+  closeM('printSiteModal');
+}
+
+function buildSiteHtml(s, sid, days, DOW_SHORT, mLabel, printedAt, showSummary){
+  // หาพนักงานที่มีวันทำงานในสถานที่นี้
+  const siteEmps=employees.filter(e=>{
+    for(let d=1;d<=days;d++){const r=att[aKey(e.id,d)];if(r&&r.site===sid&&(Number(r.mul)||0)>0)return true;}
+    return false;
+  });
+  if(!siteEmps.length) return `<div class="pr-page"><div class="pr-header"><div class="pr-logo-area"><h1>📍 ${s.name}</h1><div class="pr-period">ประจำเดือน ${mLabel}</div></div></div><div style="padding:30px;text-align:center;color:#94a3b8">ไม่มีข้อมูลการทำงานในสถานที่นี้</div></div>`;
+
+  let html='<div class="pr-page">';
+  html+='<div class="pr-header"><div class="pr-logo-area"><h1>📋 รายงานการทำงาน</h1><div class="pr-period">ประจำเดือน '+mLabel+'</div></div>'
+    +'<div class="pr-meta"><div>สถานที่: <b>'+s.name+'</b></div><div>จำนวนพนักงาน: <b>'+siteEmps.length+' คน</b></div><div>สร้างเมื่อ: '+printedAt+'</div></div></div>';
+  html+='<div class="grp-header" style="background:linear-gradient(135deg,#6d28d9 0%,#7c3aed 100%)">📍 '+s.name+' — '+siteEmps.length+' คน</div>';
+
+  // Day table
+  html+='<table><thead><tr><th style="min-width:28px">#</th><th style="min-width:140px;text-align:left;padding-left:10px">ชื่อพนักงาน</th><th style="min-width:54px">฿/วัน</th>';
+  for(let d=1;d<=days;d++){
+    const wk=isWknd(cY,cM,d);
+    html+='<th style="min-width:24px;'+(wk?'background:#1a3a6e;color:#bfdbfe':'')+'">'+d+'<br><span style="font-size:8px;opacity:.8">'+DOW_SHORT[new Date(cY,cM,d).getDay()]+'</span></th>';
+  }
+  html+='<th style="min-width:42px;background:#14532d">วันทำงาน</th><th style="min-width:40px;background:#1e3a5f">OT ชม.</th>'
+    +'<th style="min-width:60px;background:#14532d">ค่าแรงวัน</th><th style="min-width:54px;background:#1e3a5f">ค่า OT</th>'
+    +'<th style="min-width:70px;background:#0f3a1a">รวม ฿</th></tr></thead><tbody>';
+
+  let totW=0,totOt=0,totDP=0,totOP=0,totPay=0;
+  siteEmps.forEach((emp,ei)=>{
+    const{workDays,dayPay,otH,otPay,pay}=calcEmpBySite(emp,sid);
+    totW+=workDays;totOt+=otH;totDP+=dayPay;totOP+=otPay;totPay+=pay;
+    html+='<tr><td style="text-align:center;color:#94a3b8;font-size:9px">'+(ei+1)+'</td>'
+      +'<td class="emp-name">'+emp.name+'</td>'
+      +'<td style="text-align:center;color:#64748b">'+emp.wage.toLocaleString()+'</td>';
+    for(let d=1;d<=days;d++){
+      const r=att[aKey(emp.id,d)]||{mul:'',ot:''};
+      const isThisSite=r.site===sid;
+      const mul=isThisSite?(r.mul===''?0:Number(r.mul)):0;
+      const ot=isThisSite?(Number(r.ot)||0):0;
+      const wk=isWknd(cY,cM,d);
+      let cls=wk?'wknd':'';
+      let cell='<span style="color:#e2e8f0;font-size:9px">—</span>';
+      if(mul>0&&ot>0){cell='<span style="color:#065f46;font-weight:800">'+mul+'</span><br><span class="has-ot">'+ot+'ชม</span>';cls='has-work';}
+      else if(mul>0){cell='<span style="font-weight:800;color:#065f46">'+mul+'</span>';cls='has-work';}
+      else if(ot>0){cell='<span class="has-ot">OT'+ot+'</span>';}
+      // other-site days — show dimly
+      else if(r.site&&r.site!==sid&&(Number(r.mul)||0)>0){cell='<span style="color:#c4b5fd;font-size:9px" title="สถานที่อื่น">·</span>';}
+      html+='<td class="'+cls+'" style="text-align:center">'+cell+'</td>';
+    }
+    html+='<td style="text-align:center;font-weight:700">'+workDays+'</td>'
+      +'<td style="text-align:center;color:#1e40af">'+(otH||'-')+'</td>'
+      +'<td style="text-align:right;color:#065f46">'+dayPay.toLocaleString()+'</td>'
+      +'<td style="text-align:right;color:#1e40af">'+(otPay?otPay.toLocaleString():'-')+'</td>'
+      +'<td style="text-align:right;font-weight:800;color:#14532d">'+pay.toLocaleString()+'</td></tr>';
+  });
+  html+='<tr class="summary-row"><td colspan="3" style="text-align:right;padding-right:10px">รวม '+s.name+'</td>'
+    +'<td colspan="'+days+'"></td>'
+    +'<td style="text-align:center">'+totW+'</td>'
+    +'<td style="text-align:center;color:#1e40af">'+(totOt||'-')+'</td>'
+    +'<td style="text-align:right;color:#065f46">'+totDP.toLocaleString()+'</td>'
+    +'<td style="text-align:right;color:#1e40af">'+(totOP?totOP.toLocaleString():'-')+'</td>'
+    +'<td style="text-align:right;color:#14532d">'+totPay.toLocaleString()+'</td>'
+    +'</tr></tbody></table>';
+
+  if(showSummary){
+    let rows='',totW2=0,totOt2=0,totDP2=0,totOP2=0,totPay2=0;
+    siteEmps.forEach(emp=>{
+      const{workDays,dayPay,otH,otPay,pay}=calcEmpBySite(emp,sid);
+      totW2+=workDays;totOt2+=otH;totDP2+=dayPay;totOP2+=otPay;totPay2+=pay;
+      const avgMul=workDays>0?(dayPay/(emp.wage*workDays)).toFixed(2):'-';
+      rows+='<tr><td class="emp-name">'+emp.name+'</td><td style="text-align:center">'+workDays+'</td>'
+        +'<td style="text-align:center">'+avgMul+'</td>'
+        +'<td style="text-align:center;color:#1e40af">'+(otH||'-')+'</td>'
+        +'<td style="text-align:right;color:#065f46">'+dayPay.toLocaleString()+' ฿</td>'
+        +'<td style="text-align:right;color:#1e40af">'+(otPay?otPay.toLocaleString()+' ฿':'-')+'</td>'
+        +'<td style="text-align:right;font-weight:800;color:#14532d">'+pay.toLocaleString()+' ฿</td></tr>';
+    });
+    html+='<div class="sum-section"><h3>📊 สรุปยอดรวม — 📍 '+s.name+'</h3>'
+      +'<table style="width:auto;min-width:480px"><thead><tr>'
+      +'<th style="text-align:left;min-width:140px">ชื่อพนักงาน</th><th style="min-width:60px">วันทำงาน</th>'
+      +'<th style="min-width:70px">ตัวคูณ(เฉลี่ย)</th><th style="min-width:60px">OT (ชม.)</th>'
+      +'<th style="min-width:80px">ค่าแรงวัน</th><th style="min-width:70px">ค่า OT</th><th style="min-width:90px">รวมค่าแรง</th>'
+      +'</tr></thead><tbody>'+rows
+      +'<tr class="grand-row"><td style="text-align:left;padding-left:10px">รวมทั้งสิ้น</td>'
+      +'<td style="text-align:center">'+totW2+'</td><td></td>'
+      +'<td style="text-align:center">'+totOt2+'</td>'
+      +'<td style="text-align:right">'+totDP2.toLocaleString()+' ฿</td>'
+      +'<td style="text-align:right">'+(totOP2?totOP2.toLocaleString()+' ฿':'-')+'</td>'
+      +'<td style="text-align:right">'+totPay2.toLocaleString()+' ฿</td>'
+      +'</tr></tbody></table></div>';
+  }
+  html+='<div class="pr-footer"><div>ระบบเงินเดือน v5 · สร้างอัตโนมัติ '+printedAt+'</div></div>';
+  html+='</div>';
+  return html;
+}
+
+async function init(){
+  setSaveStatus('saving');
+  document.getElementById('saveText').textContent='กำลังโหลด...';
+  const loaded=await loadData();
+  buildMonSel();syncSels();initAtt();render();
+  if(loaded)setSaveStatus('saved');
+  else{setSaveStatus('saved');document.getElementById('saveText').textContent='ยังไม่มีข้อมูล';}
+}
+init();
+</script>
+
+<!-- Site Management Modal -->
+<div class="modal-bg" id="siteModal">
+<div class="modal" style="max-width:400px">
+  <div class="modal-head"><h3><i class="ti ti-map-pin" style="color:#7c3aed"></i> จัดการสถานที่ทำงาน</h3></div>
+  <div class="modal-body">
+    <div class="fr" style="display:flex;gap:6px">
+      <input id="iSiteName" placeholder="ชื่อสถานที่ เช่น ร้านเสริมสวย, โยโกเร" style="flex:1" onkeydown="if(event.key==='Enter')saveSite()"/>
+      <button class="btn primary" onclick="saveSite()">เพิ่ม</button>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:8px;margin-top:-4px">สถานที่จะแสดงให้เลือกเมื่อกรอกวันทำงาน</div>
+    <div id="siteList" style="max-height:240px;overflow-y:auto"></div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact"><button class="btn primary" onclick="closeM('siteModal')">ปิด</button></div>
+  </div>
+</div>
+</div>
+
+<!-- Site Picker Popup -->
+<div id="sitePickerPop" style="display:none;position:fixed;z-index:500;background:#fff;border:1px solid var(--border2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);min-width:200px;padding:8px 0;max-height:260px;overflow-y:auto"></div>
+
+<!-- Print by Site Modal -->
+<div class="modal-bg" id="printSiteModal">
+<div class="modal" style="max-width:420px">
+  <div class="modal-head"><h3><i class="ti ti-map-pin" style="color:#7c3aed"></i> พิมพ์รายงานแยกตามสถานที่</h3></div>
+  <div class="modal-body">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">เลือกสถานที่ที่ต้องการพิมพ์</div>
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid #c4b5fd;border-radius:8px;background:#faf5ff;cursor:pointer;margin-bottom:10px;font-size:13px;font-weight:600;color:#7c3aed">
+      <input type="checkbox" id="prsAllSite" checked onchange="prsToggleAll(this.checked)" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer"/>
+      <i class="ti ti-map-pins" style="font-size:15px"></i> พิมพ์ทุกสถานที่
+    </label>
+    <div id="prsSiteList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">ตัวเลือก</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-bottom:6px">
+        <input type="checkbox" id="prsSepWin" style="accent-color:#7c3aed;cursor:pointer"/> พิมพ์แยกหน้าต่างแต่ละสถานที่
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="prsShowSummary" checked style="accent-color:#7c3aed;cursor:pointer"/> แสดงสรุปยอดรวม
+      </label>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('printSiteModal')">ยกเลิก</button>
+      <button class="btn primary" onclick="doPrintBySite()" style="background:#7c3aed;border-color:#7c3aed"><i class="ti ti-printer"></i> พิมพ์</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Print Report Modal -->
+<div class="modal-bg" id="printModal">
+<div class="modal" style="max-width:420px">
+  <div class="modal-head"><h3><i class="ti ti-printer" style="color:#0369a1"></i> พิมพ์รายงานการทำงาน</h3></div>
+  <div class="modal-body">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
+      เลือกกลุ่มที่ต้องการพิมพ์ หรือพิมพ์ทุกกลุ่มพร้อมกัน
+    </div>
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid #7dd3fc;border-radius:8px;background:#f0f9ff;cursor:pointer;margin-bottom:10px;font-size:13px;font-weight:600;color:#0369a1">
+      <input type="checkbox" id="prAllGrp" checked onchange="prToggleAll(this.checked)" style="width:16px;height:16px;accent-color:#0369a1;cursor:pointer"/>
+      <i class="ti ti-users" style="font-size:15px"></i> พิมพ์ทุกกลุ่ม
+    </label>
+    <div id="prGrpList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">ตัวเลือกการพิมพ์</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-bottom:6px">
+        <input type="checkbox" id="prShowDays" checked style="accent-color:var(--primary);cursor:pointer"/> แสดงตารางวันทำงานรายวัน
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
+        <input type="checkbox" id="prShowSummary" checked style="accent-color:var(--primary);cursor:pointer"/> แสดงสรุปยอดรวมท้ายหน้า
+      </label>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('printModal')">ยกเลิก</button>
+      <button class="btn" onclick="closeM('printModal');openPrintSite()" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-map-pin"></i> แยกสถานที่</button>
+      <button class="btn" onclick="doPrintSeparate()" style="color:#0369a1;border-color:#7dd3fc" title="เปิดหน้าต่างแยกสำหรับแต่ละกลุ่ม"><i class="ti ti-layout-columns"></i> พิมพ์แยกกลุ่ม</button>
+      <button class="btn primary" onclick="doPrintReport()"><i class="ti ti-printer"></i> พิมพ์รวม</button>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- Export Image Modal -->
+<div class="modal-bg" id="exportImgModal">
+<div class="modal" style="max-width:420px">
+  <div class="modal-head"><h3><i class="ti ti-photo-down" style="color:#7c3aed"></i> Export รูปภาพ PNG รายกลุ่ม</h3></div>
+  <div class="modal-body">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
+      เลือกกลุ่มที่ต้องการ Export เป็นรูปภาพ (PNG) — แต่ละกลุ่มจะได้ไฟล์แยกกัน
+    </div>
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid #c4b5fd;border-radius:8px;background:#faf5ff;cursor:pointer;margin-bottom:10px;font-size:13px;font-weight:600;color:#7c3aed">
+      <input type="checkbox" id="imgAllGrp" checked onchange="imgToggleAll(this.checked)" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer"/>
+      <i class="ti ti-users" style="font-size:15px"></i> Export ทุกกลุ่ม
+    </label>
+    <div id="imgGrpList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">ตัวเลือก</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-bottom:6px">
+        <input type="checkbox" id="imgShowDays" checked style="accent-color:#7c3aed;cursor:pointer"/> แสดงตารางวันทำงานรายวัน
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-bottom:8px">
+        <input type="checkbox" id="imgShowSummary" checked style="accent-color:#7c3aed;cursor:pointer"/> แสดงสรุปยอดรวมท้าย
+      </label>
+      <div style="font-size:11px;color:var(--text2)">
+        <i class="ti ti-info-circle"></i> ไฟล์จะดาวน์โหลดอัตโนมัติทีละกลุ่ม
+      </div>
+    </div>
+    <div id="imgProgress" style="display:none;margin-top:10px;padding:10px;background:#f0fdf4;border-radius:8px;border:0.5px solid #86efac;font-size:12px;color:#14532d;text-align:center"></div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('exportImgModal')">ยกเลิก</button>
+      <button class="btn" onclick="closeM('exportImgModal');openExportImgSite()" style="color:#7c3aed;border-color:#c4b5fd"><i class="ti ti-map-pin"></i> แยกสถานที่</button>
+      <button class="btn" id="imgExportBtn" onclick="doExportImages()" style="background:#7c3aed;color:#fff;border-color:#7c3aed"><i class="ti ti-photo-down"></i> Export PNG รายกลุ่ม</button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- Print Report Area (hidden, shown on print) -->
+<div id="print-report-area" style="display:none"></div>
+
+<!-- Finance Modal -->
+<div class="modal-bg" id="financeModal">
+<div class="modal" style="max-width:480px">
+  <div class="modal-head">
+    <h3><i class="ti ti-wallet" style="color:#7c3aed"></i> การเงินรายบุคคล — <span id="finEmpName" style="color:#7c3aed"></span></h3>
+    <div style="font-size:11px;color:var(--text2);margin-top:2px">ประจำเดือน <span id="finMonLabel"></span></div>
+  </div>
+  <input type="hidden" id="finEmpId"/>
+  <div class="modal-body" style="padding-top:8px">
+
+    <!-- TAB NAV -->
+    <div style="display:flex;gap:0;margin-bottom:12px;border:0.5px solid var(--border2);border-radius:var(--rad);overflow:hidden">
+      <button onclick="finTab(1)" id="finTabBtn1" style="flex:1;height:30px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--red);color:#fff;font-family:inherit;transition:all .15s">− หักเงิน</button>
+      <button onclick="finTab(2)" id="finTabBtn2" style="flex:1;height:30px;font-size:12px;font-weight:500;border:none;cursor:pointer;background:var(--card);color:var(--text2);font-family:inherit;transition:all .15s">+ เพิ่มเงิน</button>
+      <button onclick="finTab(3)" id="finTabBtn3" style="flex:1;height:30px;font-size:12px;font-weight:500;border:none;cursor:pointer;background:var(--card);color:var(--text2);font-family:inherit;transition:all .15s">สรุป</button>
+    </div>
+
+    <!-- TAB 1: หักเงิน -->
+    <div id="finPanel1">
+      <!-- เบิกล่วงหน้า -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:12px;font-weight:700;color:#A32D2D"><i class="ti ti-cash"></i> เบิกเงินล่วงหน้า</div>
+          <button onclick="finAdd('Adv')" class="btn primary" style="height:24px;padding:0 8px;font-size:11px">+ เพิ่ม</button>
+        </div>
+        <div id="finAdvList"></div>
+      </div>
+      <!-- หักอื่น -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:12px;font-weight:700;color:#A32D2D"><i class="ti ti-minus-circle"></i> หักค่าอื่นๆ</div>
+          <button onclick="finAdd('Ded')" class="btn primary" style="height:24px;padding:0 8px;font-size:11px">+ เพิ่ม</button>
+        </div>
+        <div id="finDedList"></div>
+      </div>
+      <!-- ประกันสังคม -->
+      <div style="background:#fff5f5;border:0.5px solid var(--red-border);border-radius:var(--rad);padding:10px 12px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#A32D2D;margin-bottom:8px"><i class="ti ti-shield"></i> หักประกันสังคม</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--text2)">หัก % ของค่าแรง:</label>
+          <input id="finSsRate" type="number" min="0" max="100" step="0.1" value="0" oninput="finSaveFixed()" style="width:60px;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);text-align:right;padding:0 6px;font-family:inherit"/>
+          <label style="font-size:12px;color:var(--text2)">%  หรือยอดตายตัว:</label>
+          <input id="finSsFixed" type="number" min="0" value="0" oninput="finSaveFixed()" style="width:80px;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);text-align:right;padding:0 6px;font-family:inherit"/>
+          <span style="font-size:11px;color:var(--text3)">฿ (ยอดตายตัวจะแทน %)</span>
+        </div>
+      </div>
+      <!-- ค้างเงินบริษัท -->
+      <div style="background:#fff5f5;border:0.5px solid var(--red-border);border-radius:var(--rad);padding:10px 12px">
+        <div style="font-size:12px;font-weight:700;color:#A32D2D;margin-bottom:8px"><i class="ti ti-building-bank"></i> พนักงานค้างเงินบริษัท</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text2)">ยอดหักเดือนนี้:</label>
+          <input id="finDebt" type="number" min="0" value="0" oninput="finSaveFixed()" style="width:110px;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);text-align:right;padding:0 6px;font-family:inherit"/>
+          <span style="font-size:11px;color:var(--text3)">฿</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: เพิ่มเงิน -->
+    <div id="finPanel2" style="display:none">
+      <!-- เบิกบิลคืน -->
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:12px;font-weight:700;color:#0F6E56"><i class="ti ti-receipt"></i> นำบิลมาเบิกคืน</div>
+          <button onclick="finAdd('Reim')" class="btn success" style="height:24px;padding:0 8px;font-size:11px">+ เพิ่มบิล</button>
+        </div>
+        <div id="finReimList"></div>
+      </div>
+      <!-- บริษัทค้างพนักงาน -->
+      <div style="background:#f0fdf4;border:0.5px solid var(--green-border);border-radius:var(--rad);padding:10px 12px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:#0F6E56;margin-bottom:8px"><i class="ti ti-clock-dollar"></i> บริษัทค้างเงินพนักงาน</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label style="font-size:12px;color:var(--text2)">ยอดจ่ายเพิ่มเดือนนี้:</label>
+          <input id="finCompOwes" type="number" min="0" value="0" oninput="finSaveFixed()" style="width:110px;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);text-align:right;padding:0 6px;font-family:inherit"/>
+          <span style="font-size:11px;color:var(--text3)">฿</span>
+        </div>
+      </div>
+      <!-- ค่ารถรายวัน -->
+      <div style="background:#f0fdf4;border:0.5px solid var(--green-border);border-radius:var(--rad);padding:10px 12px">
+        <div style="font-size:12px;font-weight:700;color:#0F6E56;margin-bottom:8px"><i class="ti ti-car"></i> ค่ารถรายวัน</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--text2)">อัตรา:</label>
+          <input id="finCarRate" type="number" min="0" value="0" oninput="finSaveFixed()" style="width:90px;height:28px;font-size:12px;border:0.5px solid var(--border2);border-radius:var(--rad);text-align:right;padding:0 6px;font-family:inherit"/>
+          <span style="font-size:12px;color:var(--text2)">฿/วัน × วันที่ทำงาน = คำนวณอัตโนมัติ</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px">ยอดจะปรับตามจำนวนวันทำงานจริงในเดือนนั้น</div>
+      </div>
+    </div>
+
+    <!-- TAB 3: สรุป -->
+    <div id="finPanel3" style="display:none">
+      <div style="background:var(--card);border:0.5px solid var(--border);border-radius:var(--rad);padding:12px" id="finPreview"></div>
+    </div>
+
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('financeModal')">ปิด</button>
+      <button class="btn primary" onclick="finTab(3)" style="background:#7c3aed;border-color:#7c3aed"><i class="ti ti-eye"></i> ดูสรุป</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Export Image by Site Modal -->
+<div class="modal-bg" id="exportImgSiteModal">
+<div class="modal" style="max-width:420px">
+  <div class="modal-head"><h3><i class="ti ti-photo-down" style="color:#7c3aed"></i> Export รูปภาพ PNG แยกสถานที่</h3></div>
+  <div class="modal-body">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
+      เลือกสถานที่ที่ต้องการ Export เป็นรูปภาพ (PNG) — แต่ละสถานที่จะได้ไฟล์แยกกัน
+    </div>
+    <label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid #c4b5fd;border-radius:8px;background:#faf5ff;cursor:pointer;margin-bottom:10px;font-size:13px;font-weight:600;color:#7c3aed">
+      <input type="checkbox" id="imgSiteAll" checked onchange="imgSiteToggleAll(this.checked)" style="width:16px;height:16px;accent-color:#7c3aed;cursor:pointer"/>
+      <i class="ti ti-map-pins" style="font-size:15px"></i> Export ทุกสถานที่
+    </label>
+    <div id="imgSiteList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px"></div>
+    <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:0.5px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px">ตัวเลือก</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-bottom:6px">
+        <input type="checkbox" id="imgSiteShowDays" checked style="accent-color:#7c3aed;cursor:pointer"/> แสดงตารางวันทำงานรายวัน
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-bottom:8px">
+        <input type="checkbox" id="imgSiteShowSummary" checked style="accent-color:#7c3aed;cursor:pointer"/> แสดงสรุปยอดรวมท้าย
+      </label>
+      <div style="font-size:11px;color:var(--text2)">
+        <i class="ti ti-info-circle"></i> ไฟล์จะดาวน์โหลดอัตโนมัติทีละสถานที่
+      </div>
+    </div>
+    <div id="imgSiteProgress" style="display:none;margin-top:10px;padding:10px;background:#f0fdf4;border-radius:8px;border:0.5px solid #86efac;font-size:12px;color:#14532d;text-align:center"></div>
+  </div>
+  <div class="modal-foot">
+    <div class="mact">
+      <button class="btn" onclick="closeM('exportImgSiteModal')">ยกเลิก</button>
+      <button class="btn" id="imgSiteExportBtn" onclick="doExportImagesBySite()" style="background:#7c3aed;color:#fff;border-color:#7c3aed"><i class="ti ti-photo-down"></i> Export PNG</button>
+    </div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>
