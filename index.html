@@ -1186,17 +1186,29 @@ async function fetchSheets(){
     const json=await res.json();
     // รองรับทั้ง array ตรงๆ และ {sheets:[...]}
     const allSheets=Array.isArray(json)?json:(Array.isArray(json.sheets)?json.sheets:[]);
-    const sheets=allSheets.filter(s=>s.toLowerCase()!=='sheet1');
-    if(!sheets.length)throw new Error('empty');
+    // แสดงทุกชีต ไม่กรอง sheet1 ออก
+    const sheets=allSheets.filter(s=>s&&String(s).trim()!=='');
     const sel=document.getElementById('sheetInput');
     if(sel){
-      sel.innerHTML=sheets.map(s=>`<option value="${s}">${s}</option>`).join('');
+      if(sheets.length){
+        sel.innerHTML=sheets.map(s=>`<option value="${s}">${s}</option>`).join('');
+        // ถ้าไม่มีชีตที่เลือกไว้ หรือชีตที่เลือกไม่มีในลิสต์ → ใช้อันแรก
+        if(!S.sheet||!sheets.includes(S.sheet)){
+          S.sheet=sheets[0];
+        }
+        sel.value=S.sheet;
+      } else {
+        // ไม่มีชีตเลย — ใส่ placeholder แจ้งเตือน
+        sel.innerHTML=`<option value="">-- ไม่พบชีต --</option>`;
+        console.warn('[sheets] ไม่พบชีตจาก API');
+      }
     }
-    if(!S.sheet||S.sheet.toLowerCase()==='sheet1'){
-      S.sheet=sheets[0];
-    }
-    if(sel) sel.value=S.sheet||sheets[0];
-  }catch(e){console.warn('[sheets]',e.message);}
+  }catch(e){
+    console.warn('[sheets]',e.message);
+    // แสดงข้อความ error ใน dropdown
+    const sel=document.getElementById('sheetInput');
+    if(sel) sel.innerHTML=`<option value="">-- โหลดไม่ได้ --</option>`;
+  }
   finally{if(ind)ind.style.display='none';}
 }
 
@@ -1270,10 +1282,12 @@ function connect(){
   const url=document.getElementById('urlInput').value.trim();
   if(!url){alert('กรุณากรอก URL');return;}
   S.url=url;
-  S.sheet=S.sheet||'';
   try{localStorage.setItem('att_url',url);}catch(e){}
-  document.getElementById('mc').innerHTML=`<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--lavender-dk);">กำลังโหลดข้อมูล...</div></div>`;
-  fetchSheets().then(()=>fetchData());
+  document.getElementById('mc').innerHTML=`<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--lavender-dk);">กำลังโหลดชีต...</div></div>`;
+  fetchSheets().then(()=>{
+    document.getElementById('mc').innerHTML=`<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--lavender-dk);">กำลังโหลดข้อมูล${S.sheet?' ชีต "'+S.sheet+'"':''}...</div></div>`;
+    fetchData();
+  });
 }
 
 
@@ -1366,4 +1380,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
