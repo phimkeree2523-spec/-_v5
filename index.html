@@ -1114,7 +1114,8 @@ function renderStats(){
   document.getElementById('s2').textContent=total-wfh;
   document.getElementById('s3').textContent=grps;
   document.getElementById('s4').textContent=pct+'%';
-  document.getElementById('hdrsub').textContent=S.day?dLabel(S.day):'';
+  const sheetLabel=S.sheet?` · ชีต: ${S.sheet}`:'';
+  document.getElementById('hdrsub').textContent=(S.day?dLabel(S.day):'')+sheetLabel;
 }
 function legHTML(){
   return`<div class="leg">
@@ -1498,4 +1499,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
