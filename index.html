@@ -511,6 +511,65 @@
   .days-scroll { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .days-scroll::-webkit-scrollbar { display: none; }
 
+  /* ─── GROUP LIST PANEL ─────────────────────────── */
+  .group-panel {
+    background: white;
+    border-bottom: 1.5px solid var(--border);
+    padding: 8px 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .group-panel-label {
+    font-size: 11px;
+    color: var(--lavender-dk);
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .group-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .gtag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid var(--lavender-mid);
+    background: var(--lavender);
+    color: var(--lavender-dk);
+    transition: all .15s;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .gtag:hover { background: var(--lavender-mid); color: var(--lavender-dk); }
+  .gtag.on { background: var(--lavender-btn); color: white; border-color: var(--lavender-btn); }
+  .gtag-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .gtag-count {
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(0,0,0,0.1);
+    padding: 1px 5px;
+    border-radius: 10px;
+  }
+  .gtag.on .gtag-count { background: rgba(255,255,255,0.25); }
+  .group-panel-empty {
+    font-size: 11px;
+    color: var(--text-sub);
+    font-style: italic;
+  }
+  @media (max-width: 640px) {
+    .group-panel { padding: 7px 14px; }
+  }
+
   /* ─── OVERLAY (mobile) ───────────────────────────── */
   .sb-overlay {
     display: none;
@@ -859,6 +918,14 @@
     </div>
   </div>
 
+  <!-- Group list panel -->
+  <div class="group-panel" id="groupPanel">
+    <span class="group-panel-label">👥 กลุ่ม:</span>
+    <div class="group-tags" id="groupTags">
+      <span class="group-panel-empty">กำลังโหลด...</span>
+    </div>
+  </div>
+
   <!-- Filter control bar -->
   <div class="ctrl">
     <div class="tabs">
@@ -1003,6 +1070,13 @@ function setGroup(g,el){
   S.filterGroup=g;
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
+  // sync group panel
+  document.querySelectorAll('#groupTags .gtag').forEach(t=>{
+    t.classList.remove('on');
+    const isAll=t.id==='gtag-all'&&g==='all';
+    const isMatch=t.textContent.trim().startsWith(g)&&g!=='all';
+    if(isAll||isMatch)t.classList.add('on');
+  });
   render();
 }
 function chDay(d){
@@ -1143,6 +1217,50 @@ function buildChips(){
     el.onclick=function(){setGroup(g,this);};
     c.appendChild(el);
   });
+  buildGroupPanel();
+}
+const GROUP_COLORS=[
+  '#8b5cf6','#10b981','#f97316','#3b82f6','#ec4899','#eab308','#14b8a6','#6366f1'
+];
+function getGroupColor(g){
+  const i=S.groups.indexOf(g);
+  return GROUP_COLORS[i%GROUP_COLORS.length];
+}
+function buildGroupPanel(){
+  const wrap=document.getElementById('groupTags');
+  if(!wrap)return;
+  if(!S.groups.length){
+    wrap.innerHTML='<span class="group-panel-empty">ไม่พบข้อมูลกลุ่ม</span>';
+    return;
+  }
+  // "ทั้งหมด" tag
+  let html=`<span class="gtag on" id="gtag-all" onclick="setGroupPanel('all',this)">
+    <span class="gtag-dot" style="background:#8b5cf6;"></span>ทั้งหมด
+    <span class="gtag-count">${S.data.length}</span>
+  </span>`;
+  S.groups.forEach(g=>{
+    const col=getGroupColor(g);
+    const cnt=S.data.filter(r=>r.group===g).length;
+    html+=`<span class="gtag" id="gtag-${encodeURIComponent(g)}" onclick="setGroupPanel('${g.replace(/'/g,"\\'")}',this)">
+      <span class="gtag-dot" style="background:${col};"></span>${g}
+      <span class="gtag-count">${cnt}</span>
+    </span>`;
+  });
+  wrap.innerHTML=html;
+}
+function setGroupPanel(g,el){
+  // sync with existing filter
+  S.filterGroup=g;
+  // highlight
+  document.querySelectorAll('#groupTags .gtag').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  // sync chips
+  document.querySelectorAll('.chip').forEach(c=>{
+    c.classList.remove('on');
+    if(g==='all'&&c.textContent==='ทั้งหมด')c.classList.add('on');
+    else if(c.textContent===g)c.classList.add('on');
+  });
+  render();
 }
 function updateChips(){
   const dayGroups=S.day?[...new Set(getDayD(S.day).map(r=>r.group))]:S.groups;
@@ -1380,4 +1498,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
