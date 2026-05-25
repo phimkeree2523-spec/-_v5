@@ -1304,7 +1304,16 @@ async function fetchSheets(){
     if(!res.ok)throw new Error('HTTP '+res.status);
     const json=await res.json();
     // รองรับทั้ง array ตรงๆ และ {sheets:[...]}
-    const allSheets=Array.isArray(json)?json:(Array.isArray(json.sheets)?json.sheets:[]);
+    let allSheets=Array.isArray(json)?json:(Array.isArray(json.sheets)?json.sheets:[]);
+    // ตรวจสอบว่า response เป็น array of arrays (ข้อมูลชีต ไม่ใช่ชื่อชีต)
+    // ถ้าใช่ แสดงว่า Apps Script ไม่รองรับ action=sheets → ซ่อน sheet bar
+    if(allSheets.length>0 && Array.isArray(allSheets[0])){
+      // Apps Script ส่งข้อมูลแถวมาแทนชื่อชีต → ไม่แสดง dropdown
+      const bar=document.getElementById('sheetBar');
+      if(bar)bar.style.display='none';
+      if(ind)ind.style.display='none';
+      return;
+    }
     // แสดงทุกชีต ไม่กรอง sheet1 ออก
     const sheets=allSheets.filter(s=>s&&String(s).trim()!=='');
     const sel=document.getElementById('sheetInput');
@@ -1499,4 +1508,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
