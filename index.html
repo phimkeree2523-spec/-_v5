@@ -810,7 +810,14 @@
     <div class="up-title">⚙️ ตั้งค่าการเชื่อมต่อ</div>
     <label>Apps Script URL:</label>
     <input id="urlInputMobile" placeholder="https://script.google.com/..." />
-    <button class="up-btn" onclick="connectMobile()">🔗 เชื่อมต่อ</button>
+    <button class="up-btn" onclick="connectMobileUrl()" style="margin-bottom:12px;">🔗 เชื่อมต่อ / โหลดรายชื่อชีต</button>
+    <div id="mobileSheetRow" style="display:none;">
+      <label>เลือกชีต (Sheet):</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="sheetInputMobile" style="flex:1;border:1.5px solid var(--lavender-mid);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Sarabun',sans-serif;outline:none;background:white;"></select>
+      </div>
+      <button class="up-btn" onclick="applySheetMobile()" style="margin-top:10px;">✅ ใช้ชีตนี้</button>
+    </div>
   </div>
 </div>
 
@@ -1457,6 +1464,15 @@ function openUrlPanel() {
   const mobileInput = document.getElementById('urlInputMobile');
   const desktopInput = document.getElementById('urlInput');
   if (mobileInput && desktopInput) mobileInput.value = desktopInput.value;
+  // sync current sheet selection if already loaded
+  const mobileSheetRow = document.getElementById('mobileSheetRow');
+  const mobileSheetSel = document.getElementById('sheetInputMobile');
+  const desktopSheetSel = document.getElementById('sheetInput');
+  if (desktopSheetSel && desktopSheetSel.options.length > 0 && mobileSheetSel) {
+    mobileSheetSel.innerHTML = desktopSheetSel.innerHTML;
+    mobileSheetSel.value = S.sheet || desktopSheetSel.value;
+    if (mobileSheetRow) mobileSheetRow.style.display = 'block';
+  }
   urlPanel.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1464,12 +1480,37 @@ function closeUrlPanel() {
   document.getElementById('urlPanel').classList.remove('open');
   document.body.style.overflow = '';
 }
-function connectMobile() {
+// Step 1: Connect URL and load sheet list on mobile
+async function connectMobileUrl() {
   const val = (document.getElementById('urlInputMobile').value || '').trim();
   if (!val) { alert('กรุณากรอก URL'); return; }
   document.getElementById('urlInput').value = val;
+  S.url = val;
+  try { localStorage.setItem('att_url', val); } catch(e) {}
+  // fetch sheets and populate mobile selector
+  const mobileSheetRow = document.getElementById('mobileSheetRow');
+  const mobileSheetSel = document.getElementById('sheetInputMobile');
+  if (mobileSheetSel) mobileSheetSel.innerHTML = '<option>กำลังโหลด...</option>';
+  if (mobileSheetRow) mobileSheetRow.style.display = 'block';
+  await fetchSheets();
+  // sync to mobile selector
+  const desktopSheetSel = document.getElementById('sheetInput');
+  if (desktopSheetSel && mobileSheetSel) {
+    mobileSheetSel.innerHTML = desktopSheetSel.innerHTML;
+    mobileSheetSel.value = S.sheet || desktopSheetSel.value;
+  }
+}
+// Step 2: Apply selected sheet on mobile
+function applySheetMobile() {
+  const mobileSheetSel = document.getElementById('sheetInputMobile');
+  const sheetName = (mobileSheetSel ? mobileSheetSel.value : '').trim();
+  if (!sheetName) { alert('กรุณาเลือกชีต'); return; }
   closeUrlPanel();
-  connect();
+  applySheetDirect(sheetName);
+}
+// Legacy: kept for compatibility
+function connectMobile() {
+  connectMobileUrl();
 }
 
 /* ─── Sync bottom nav when view changes ──────── */
@@ -1508,4 +1549,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
