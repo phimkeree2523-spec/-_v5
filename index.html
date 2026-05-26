@@ -810,14 +810,7 @@
     <div class="up-title">⚙️ ตั้งค่าการเชื่อมต่อ</div>
     <label>Apps Script URL:</label>
     <input id="urlInputMobile" placeholder="https://script.google.com/..." />
-    <button class="up-btn" onclick="connectMobileUrl()" style="margin-bottom:12px;">🔗 เชื่อมต่อ / โหลดรายชื่อชีต</button>
-    <div id="mobileSheetRow" style="display:none;">
-      <label>เลือกชีต (Sheet):</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <select id="sheetInputMobile" style="flex:1;border:1.5px solid var(--lavender-mid);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Sarabun',sans-serif;outline:none;background:white;"></select>
-      </div>
-      <button class="up-btn" onclick="applySheetMobile()" style="margin-top:10px;">✅ ใช้ชีตนี้</button>
-    </div>
+    <button class="up-btn" onclick="connectMobile()">🔗 เชื่อมต่อ</button>
   </div>
 </div>
 
@@ -1282,22 +1275,53 @@ function updateRT(){
   const n=new Date();
   document.getElementById('rt').textContent=`อัพเดทล่าสุด: ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
 }
+function extractDayNum(val){
+  if(val==null||val==='')return 0;
+  const s=String(val).trim();
+  // เลขตรง เช่น 26
+  const direct=parseInt(s);
+  if(!isNaN(direct)&&direct>0&&direct<=31)return direct;
+  // รูปแบบ dd/mm/yyyy หรือ d/m/yyyy
+  const dmy=s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if(dmy)return parseInt(dmy[1]);
+  // รูปแบบ yyyy-mm-dd
+  const ymd=s.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  if(ymd)return parseInt(ymd[3]);
+  // มีตัวเลขนำหน้า เช่น "วันที่ 26" หรือ "Day 5"
+  const leading=s.match(/(\d{1,2})/);
+  if(leading){const n=parseInt(leading[1]);if(n>0&&n<=31)return n;}
+  return 0;
+}
+
 function parseData(raw){
   const rows=Array.isArray(raw)?raw:[];
   const data=[];
+  // ตรวจหา header row — หา row แรกที่ไม่ใช่ข้อมูลจริง
+  let startRow=0;
+  for(let i=0;i<Math.min(rows.length,3);i++){
+    const row=rows[i]||[];
+    const cell0=String(row[0]||'').trim();
+    // ถ้า col0 เป็นตัวอักษร (header) ให้ข้าม
+    if(cell0&&isNaN(extractDayNum(cell0))&&!/^\d/.test(cell0)){startRow=i+1;}
+  }
   rows.forEach((row,i)=>{
-    if(i===0)return;
+    if(i<startRow)return;
     const get=k=>row[k]!=null?String(row[k]).trim():'';
-    const dayNum=parseInt(get(0))||0;
+    const dayNum=extractDayNum(get(0));
     const name=get(2);
     const ot=get(3);
     const group=get(4)||'ไม่ระบุกลุ่ม';
     const location=get(5);
-    if(!name||!dayNum)return;
+    if(!name)return; // ต้องมีชื่อ
+    if(!dayNum)return; // ต้องได้วันที่
     const status=location||'มาทำงาน';
     if(status==='ลา'||status==='ขาด')return;
     data.push({day:dayNum,name,ot,group,location,status});
   });
+  // DEBUG: แสดงใน console ว่าได้ข้อมูลกี่แถว และ header เดิมคืออะไร
+  console.log('[parseData] raw rows:',rows.length,'→ parsed:',data.length,'startRow:',startRow);
+  if(rows[0])console.log('[parseData] header sample:',rows[0].slice(0,7));
+  if(data.length===0&&rows.length>1)console.warn('[parseData] ไม่ได้ข้อมูลเลย ตรวจสอบ column index และรูปแบบวันที่ใน col[0]:',rows.slice(1,4).map(r=>r[0]));
   return data;
 }
 
@@ -1382,8 +1406,37 @@ async function fetchData(){
         S.day=latestDay;
         document.getElementById('ddsp').textContent=dLabel(S.day);
       }
+      buildChips(); updateRT(); render();
+    } else {
+      // ได้ข้อมูลดิบมา แต่ parse ไม่ได้เลย → แสดง debug
+      const sample=raw.slice(0,4);
+      const colLabels=['col[0] วันที่','col[1]','col[2] ชื่อ','col[3] โอที','col[4] กลุ่ม','col[5] สถานที่'];
+      const headerRow=sample[0]||[];
+      const dataRow=sample[1]||[];
+      let tbl='<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:8px;">';
+      tbl+='<tr style="background:#ede8fb;">';
+      colLabels.forEach((l,i)=>tbl+=`<th style="padding:4px 6px;border:1px solid #d1c8f5;text-align:left;">${l}</th>`);
+      tbl+='</tr>';
+      [headerRow,dataRow].forEach((row,ri)=>{
+        tbl+=`<tr style="background:${ri%2===0?'#faf8ff':'#fff'}">`;
+        for(let c=0;c<6;c++){
+          const v=row[c]!=null?String(row[c]):'';
+          tbl+=`<td style="padding:4px 6px;border:1px solid #ede8fb;word-break:break-all;">${v||'<span style="color:#ccc">—</span>'}</td>`;
+        }
+        tbl+='</tr>';
+      });
+      tbl+='</table>';
+      document.getElementById('mc').innerHTML=
+        '<div class="err-box" style="background:#fffbeb;border-color:#fde68a;">'+
+          '<p style="color:#92400e;">⚠️ เชื่อมต่อสำเร็จ แต่ไม่พบข้อมูลพนักงาน (0 แถว)</p>'+
+          '<p style="margin-top:6px;font-size:11.5px;color:#78350f;">ชีต: <strong>'+(S.sheet||'(ค่าเริ่มต้น)')+'</strong> | ได้ข้อมูลดิบ: <strong>'+raw.length+' แถว</strong></p>'+
+          '<p style="margin-top:8px;font-size:11.5px;color:#92400e;"><strong>ตรวจสอบ column ของชีต:</strong> (แถวที่ 1=header, แถวที่ 2=ข้อมูลแรก)</p>'+
+          tbl+
+          '<p style="margin-top:8px;font-size:11px;color:#78350f;">โปรแกรมต้องการ: col[0]=วันที่(ตัวเลข 1-31), col[2]=ชื่อ, col[4]=กลุ่ม</p>'+
+          '<p style="margin-top:4px;font-size:11px;color:#78350f;">ถ้า column ไม่ตรง กรุณาบอกลำดับ column จริงของชีต เพื่อแก้โค้ดให้ถูกต้อง</p>'+
+        '</div>';
+      buildChips(); updateRT();
     }
-    buildChips(); updateRT(); render();
   }catch(e){
     const previewUrl=S.url.length>60?S.url.slice(0,60)+'...':S.url;
     document.getElementById('mc').innerHTML=
@@ -1464,15 +1517,6 @@ function openUrlPanel() {
   const mobileInput = document.getElementById('urlInputMobile');
   const desktopInput = document.getElementById('urlInput');
   if (mobileInput && desktopInput) mobileInput.value = desktopInput.value;
-  // sync current sheet selection if already loaded
-  const mobileSheetRow = document.getElementById('mobileSheetRow');
-  const mobileSheetSel = document.getElementById('sheetInputMobile');
-  const desktopSheetSel = document.getElementById('sheetInput');
-  if (desktopSheetSel && desktopSheetSel.options.length > 0 && mobileSheetSel) {
-    mobileSheetSel.innerHTML = desktopSheetSel.innerHTML;
-    mobileSheetSel.value = S.sheet || desktopSheetSel.value;
-    if (mobileSheetRow) mobileSheetRow.style.display = 'block';
-  }
   urlPanel.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1480,37 +1524,12 @@ function closeUrlPanel() {
   document.getElementById('urlPanel').classList.remove('open');
   document.body.style.overflow = '';
 }
-// Step 1: Connect URL and load sheet list on mobile
-async function connectMobileUrl() {
+function connectMobile() {
   const val = (document.getElementById('urlInputMobile').value || '').trim();
   if (!val) { alert('กรุณากรอก URL'); return; }
   document.getElementById('urlInput').value = val;
-  S.url = val;
-  try { localStorage.setItem('att_url', val); } catch(e) {}
-  // fetch sheets and populate mobile selector
-  const mobileSheetRow = document.getElementById('mobileSheetRow');
-  const mobileSheetSel = document.getElementById('sheetInputMobile');
-  if (mobileSheetSel) mobileSheetSel.innerHTML = '<option>กำลังโหลด...</option>';
-  if (mobileSheetRow) mobileSheetRow.style.display = 'block';
-  await fetchSheets();
-  // sync to mobile selector
-  const desktopSheetSel = document.getElementById('sheetInput');
-  if (desktopSheetSel && mobileSheetSel) {
-    mobileSheetSel.innerHTML = desktopSheetSel.innerHTML;
-    mobileSheetSel.value = S.sheet || desktopSheetSel.value;
-  }
-}
-// Step 2: Apply selected sheet on mobile
-function applySheetMobile() {
-  const mobileSheetSel = document.getElementById('sheetInputMobile');
-  const sheetName = (mobileSheetSel ? mobileSheetSel.value : '').trim();
-  if (!sheetName) { alert('กรุณาเลือกชีต'); return; }
   closeUrlPanel();
-  applySheetDirect(sheetName);
-}
-// Legacy: kept for compatibility
-function connectMobile() {
-  connectMobileUrl();
+  connect();
 }
 
 /* ─── Sync bottom nav when view changes ──────── */
@@ -1549,4 +1568,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
