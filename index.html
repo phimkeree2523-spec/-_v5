@@ -1351,12 +1351,10 @@ async function fetchSheets(){
     const sel=document.getElementById('sheetInput');
     if(sel){
       if(sheets.length){
-        sel.innerHTML=sheets.map(s=>`<option value="${s}">${s}</option>`).join('');
-        // ถ้าไม่มีชีตที่เลือกไว้ หรือชีตที่เลือกไม่มีในลิสต์ → ใช้อันแรกที่เหลือ
-        if(!S.sheet||!sheets.includes(S.sheet)){
-          S.sheet=sheets[0];
-        }
-        sel.value=S.sheet;
+        sel.innerHTML=`<option value="">-- กรุณาเลือกชีต --</option>`+sheets.map(s=>`<option value="${s}">${s}</option>`).join('');
+        // ไม่ auto-select — รอให้ผู้ใช้เลือกเอง
+        S.sheet='';
+        sel.value='';
       } else {
         // ไม่มีชีตเลย — ใส่ placeholder แจ้งเตือน
         sel.innerHTML=`<option value="">-- ไม่พบชีต --</option>`;
@@ -1472,10 +1470,11 @@ function connect(){
   if(!url){alert('กรุณากรอก URL');return;}
   S.url=url;
   try{localStorage.setItem('att_url',url);}catch(e){}
-  document.getElementById('mc').innerHTML=`<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--lavender-dk);">กำลังโหลดชีต...</div></div>`;
+  document.getElementById('mc').innerHTML=`<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--lavender-dk);">กำลังโหลดรายชื่อชีต...</div></div>`;
   fetchSheets().then(()=>{
-    document.getElementById('mc').innerHTML=`<div class="loading"><div class="spinner"></div><div style="font-size:13px;color:var(--lavender-dk);">กำลังโหลดข้อมูล${S.sheet?' ชีต "'+S.sheet+'"':''}...</div></div>`;
-    fetchData();
+    // ไม่ fetchData อัตโนมัติ — รอให้ผู้ใช้เลือกชีตแล้วกด "โหลด"
+    document.getElementById('mc').innerHTML=
+      '<div class="empty"><div class="ei2">📋</div><div>กรุณาเลือกชีตด้านบน แล้วกด <strong>"โหลด"</strong></div></div>';
   });
 }
 
@@ -1561,7 +1560,11 @@ const initUrl=savedUrl||inputUrl;
 if(initUrl){
   document.getElementById('urlInput').value=initUrl;
   S.url=initUrl;
-  connect();
+  // โหลดรายชีตไว้ล่วงหน้า แต่ไม่ fetchData — รอให้ผู้ใช้เลือกชีตก่อน
+  fetchSheets().then(()=>{
+    document.getElementById('mc').innerHTML=
+      '<div class="empty"><div class="ei2">📋</div><div>กรุณาเลือกชีตด้านบน แล้วกด <strong>"โหลด"</strong></div></div>';
+  });
 }else{
   document.getElementById('mc').innerHTML=
     '<div class="empty"><div class="ei2">🔗</div><div>กดเมนู "ตั้งค่า URL" ใน sidebar แล้วกด "เชื่อมต่อ"</div></div>'+hintHTML();
@@ -1569,5 +1572,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
-
