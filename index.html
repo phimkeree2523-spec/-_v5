@@ -1345,13 +1345,14 @@ async function fetchSheets(){
       if(ind)ind.style.display='none';
       return;
     }
-    // แสดงทุกชีต ไม่กรอง sheet1 ออก
-    const sheets=allSheets.filter(s=>s&&String(s).trim()!=='');
+    // กรองชีตที่ไม่ต้องการออก
+    const SKIP_SHEETS=['Sheet1','รวมข้อมูล'];
+    const sheets=allSheets.filter(s=>s&&String(s).trim()!==''&&!SKIP_SHEETS.includes(String(s).trim()));
     const sel=document.getElementById('sheetInput');
     if(sel){
       if(sheets.length){
         sel.innerHTML=sheets.map(s=>`<option value="${s}">${s}</option>`).join('');
-        // ถ้าไม่มีชีตที่เลือกไว้ หรือชีตที่เลือกไม่มีในลิสต์ → ใช้อันแรก
+        // ถ้าไม่มีชีตที่เลือกไว้ หรือชีตที่เลือกไม่มีในลิสต์ → ใช้อันแรกที่เหลือ
         if(!S.sheet||!sheets.includes(S.sheet)){
           S.sheet=sheets[0];
         }
@@ -1568,4 +1569,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
