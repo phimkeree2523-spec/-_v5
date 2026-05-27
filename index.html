@@ -811,6 +811,16 @@
     <label>Apps Script URL:</label>
     <input id="urlInputMobile" placeholder="https://script.google.com/..." />
     <button class="up-btn" onclick="connectMobile()">🔗 เชื่อมต่อ</button>
+    <!-- Sheet selector บนมือถือ -->
+    <div id="mobileSheetRow" style="display:none;margin-top:14px;">
+      <label style="margin-bottom:6px;display:block;font-size:12px;color:var(--text-sub);">📄 เลือกชีต:</label>
+      <div style="display:flex;gap:8px;">
+        <select id="sheetInputMobile" style="flex:1;border:1.5px solid var(--lavender-mid);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Sarabun',sans-serif;outline:none;background:white;">
+          <option value="">-- กรุณาเลือกชีต --</option>
+        </select>
+        <button onclick="loadMobileSheet()" style="background:linear-gradient(135deg,var(--lavender-btn),#a855f7);color:white;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Sarabun',sans-serif;white-space:nowrap;">โหลด</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1517,6 +1527,15 @@ function openUrlPanel() {
   const mobileInput = document.getElementById('urlInputMobile');
   const desktopInput = document.getElementById('urlInput');
   if (mobileInput && desktopInput) mobileInput.value = desktopInput.value;
+  // ถ้ามี URL และมีชีตใน desktop dropdown → sync มาแสดงใน mobile ด้วยเลย
+  const desktopSel = document.getElementById('sheetInput');
+  const msi = document.getElementById('sheetInputMobile');
+  const msr = document.getElementById('mobileSheetRow');
+  if(desktopSel && msi && msr && desktopSel.options.length > 1) {
+    msi.innerHTML = desktopSel.innerHTML;
+    msi.value = S.sheet || '';
+    msr.style.display = 'block';
+  }
   urlPanel.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1528,8 +1547,33 @@ function connectMobile() {
   const val = (document.getElementById('urlInputMobile').value || '').trim();
   if (!val) { alert('กรุณากรอก URL'); return; }
   document.getElementById('urlInput').value = val;
+  S.url = val;
+  try{localStorage.setItem('att_url', val);}catch(e){}
+  // โหลดรายชีตแล้วแสดง dropdown ใน panel — ยังไม่ปิด panel
+  const msr = document.getElementById('mobileSheetRow');
+  const msi = document.getElementById('sheetInputMobile');
+  if(msr) msr.style.display = 'none';
+  fetchSheets().then(() => {
+    // sync ชื่อชีตจาก desktop dropdown มาใส่ mobile dropdown
+    const desktopSel = document.getElementById('sheetInput');
+    if(msi && desktopSel) {
+      msi.innerHTML = desktopSel.innerHTML;
+      msi.value = '';
+    }
+    if(msr) msr.style.display = 'block';
+    document.getElementById('mc').innerHTML =
+      '<div class="empty"><div class="ei2">📋</div><div>กรุณาเลือกชีตด้านบน แล้วกด <strong>"โหลด"</strong></div></div>';
+  });
+}
+function loadMobileSheet() {
+  const msi = document.getElementById('sheetInputMobile');
+  const val = (msi ? msi.value : '').trim();
+  if(!val) { alert('กรุณาเลือกชีตก่อน'); return; }
+  // sync กลับไปที่ desktop dropdown
+  const desktopSel = document.getElementById('sheetInput');
+  if(desktopSel) desktopSel.value = val;
   closeUrlPanel();
-  connect();
+  applySheetDirect(val);
 }
 
 /* ─── Sync bottom nav when view changes ──────── */
@@ -1572,4 +1616,3 @@ if(initUrl){
 </script>
 </body>
 </html>
-
